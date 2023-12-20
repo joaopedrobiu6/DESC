@@ -132,6 +132,7 @@ class ParticleTracer(_Objective):
         if constants is None:
             constants = self.constants
 
+        @jit
         def system(initial_conditions = self.initial_conditions, t = self.output_time, initial_parameters = self.initial_parameters):
             #initial conditions
             psi, theta, zeta, vpar = initial_conditions
@@ -151,10 +152,12 @@ class ParticleTracer(_Objective):
         
         initial_conditions_jax = jnp.array(self.initial_conditions, dtype=jnp.float64)
         t_jax = self.output_time
-        system_jit = jit(system)
+        # system_jit = jit(system)
 
+        intfun = lambda initial_conditions_jax: jax_odeint(partial(system, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
+        x = jnp.vectorize(intfun, signature="(k)->(n,k)")(x0)
         # DIFFRAX
-        solution = jax_odeint(partial(system_jit, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
+        # solution = jax_odeint(partial(system, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
 
         if self.compute_option == "optimization":
             return jnp.sum((solution[:, 0] - solution[0, 0]) * (solution[:, 0] - solution[0, 0]), axis=-1)
