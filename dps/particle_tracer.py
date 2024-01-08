@@ -43,7 +43,7 @@ def output_to_file(solution, name):
 
 
 # Energy and Mass info
-Energy_eV = 100
+Energy_eV = 10
 Proton_Mass = scipy.constants.proton_mass
 Proton_Charge = scipy.constants.elementary_charge
 Energy_SI = Energy_eV*Proton_Charge
@@ -62,7 +62,7 @@ ini_cond = [float(psi_i), theta_i, zeta_i, float(vpar_i)]
 # Time
 tmin = 0
 tmax = 1e-2
-nt = 500
+nt = 50
 time = jnp.linspace(tmin, tmax, nt)
 
 initial_conditions = ini_cond
