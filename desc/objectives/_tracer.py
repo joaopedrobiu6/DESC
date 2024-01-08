@@ -9,7 +9,7 @@ from desc.grid import Grid
 from jax.experimental.ode import odeint as jax_odeint
 from functools import partial
 from jax import jit
-from diffrax import diffeqsolve, ODETerm, Dopri5, SaveAt
+from diffrax import diffeqsolve, ODETerm, Dopri5, SaveAt, PIDController
 
 from .normalization import compute_scaling_factors
 from .objective_funs import _Objective
@@ -159,17 +159,18 @@ class ParticleTracer(_Objective):
         t_jax = self.output_time
 
         # initial_params = (self.initial_parameters[0], self.initial_parameters[1], 0, 0)
+        stepsize_controller = PIDController(rtol=self.tolerance, atol=1e-7)
         initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
         term = ODETerm(system)
         solver = Dopri5()
         saveat = SaveAt(ts=t_jax)
-        solution = diffeqsolve(term, solver, t0=t_jax[0], t1=t_jax[-1], dt0=t_jax[1]-t_jax[0], y0=initial_conds, saveat=saveat, args=self.initial_parameters)
+        solution = diffeqsolve(term, solver, t0=t_jax[0], t1=t_jax[-1], dt0=t_jax[1]-t_jax[0], y0=initial_conds, saveat=saveat, args=self.initial_parameters, stepsize_controller=stepsize_controller)
 
         # initial_conditions_jax = jnp.array(self.initial_conditions, dtype=jnp.float64)
         # solution = jax_odeint(partial(system_jit, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
 
         if self.compute_option == "optimization":
-            return jnp.sum((solution[:, 0] - solution[0, 0]) * (solution[:, 0] - solution[0, 0]), axis=-1)
+            return jnp.sum((solution.ys[:, 0] - solution.ys[0, 0]) * (solution.ys[:, 0] - solution.ys[0, 0]), axis=-1)
         
         elif self.compute_option == "optimization-debug":
             import matplotlib.pyplot as plt
@@ -205,7 +206,7 @@ class ParticleTracer(_Objective):
 
             return jnp.sum((solution[:, 0] - solution[0, 0]) * (solution[:, 0] - solution[0, 0]), axis=-1)
         elif self.compute_option == "tracer":
-            return solution
+            return solution.ys
         elif self.compute_option == "average psi":
             return jnp.mean(solution[:, 0])
         elif self.compute_option == "average theta":
