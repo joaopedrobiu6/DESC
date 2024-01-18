@@ -164,7 +164,7 @@ class ParticleTracer(_Objective):
         term = ODETerm(system)
         solver = Dopri5()
         saveat = SaveAt(ts=t_jax)
-        solution = diffeqsolve(term, solver, t0=t_jax[0], t1=t_jax[-1], dt0=t_jax[1]-t_jax[0], y0=initial_conds, saveat=saveat, args=self.initial_parameters, stepsize_controller=stepsize_controller)
+        solution = diffeqsolve(term, solver, t0=t_jax[0], t1=t_jax[-1], dt0=6e-6, y0=initial_conds, saveat=saveat, args=self.initial_parameters, stepsize_controller=stepsize_controller)
 
         # initial_conditions_jax = jnp.array(self.initial_conditions, dtype=jnp.float64)
         # solution = jax_odeint(partial(system_jit, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
