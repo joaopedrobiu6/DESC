@@ -146,10 +146,10 @@ objective.build()
 # ar = jnp.copy(eq.compute("R0/a")["R0/a"])
 # aspect_ratio = AspectRatio(eq=eq, target=ar, weight=1e1)
 # Compute optimization
-solution = objective.compute(*objective.xs(eq))
+# solution = objective.compute(*objective.xs(eq))
 
 intermediate_time_2 = timet()
-print(f"\nTime to build and compute solution: {intermediate_time_2 - intermediate_time}s\n")
+# print(f"\nTime to build and compute solution: {intermediate_time_2 - intermediate_time}s\n")
 
 # Objective Object
 ObjFunction = ObjectiveFunction((objective), deriv_mode="looped")

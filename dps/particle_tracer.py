@@ -62,7 +62,7 @@ ini_cond = jnp.array([float(psi_i), theta_i, zeta_i, float(vpar_i)])
 # Time
 tmin = 0
 tmax = 5e-4
-nt = 50
+nt = 7500
 time = jnp.linspace(tmin, tmax, nt)
 
 initial_conditions = ini_cond
