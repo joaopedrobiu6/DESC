@@ -9,7 +9,7 @@ from desc.grid import Grid
 from jax.experimental.ode import odeint as jax_odeint
 from functools import partial
 from jax import jit
-from diffrax import diffeqsolve, ODETerm, Dopri5, SaveAt, PIDController
+from diffrax import diffeqsolve, ODETerm, Dopri5, SaveAt, PIDController, ConstantStepSize
 
 from .normalization import compute_scaling_factors
 from .objective_funs import _Objective
@@ -110,9 +110,9 @@ class ParticleTracer(_Objective):
             has_axis=False,
         )
         
-        self.charge = 1.6e-19
-        self.mass = 1.673e-27 # CHECK VALUES
-        self.Energy = 3.52e6*self.charge 
+        # self.charge = 1.6e-19
+        # self.mass = 1.673e-27 # CHECK VALUES
+        # self.Energy = 3.52e6*self.charge 
         eq = eq or self._things[0]
 
         if self.compute_option == "optimization" or self.compute_option == "optimization-debug":
@@ -152,14 +152,14 @@ class ParticleTracer(_Objective):
             thetadot = data["thetadot"]
             zetadot = data["zetadot"]
             vpardot = data["vpardot"]
-            print(jnp.array([psidot, thetadot, zetadot, vpardot]).shape)
             return jnp.array([psidot, thetadot, zetadot, vpardot])
         
         # system_jit = jit(system)
         t_jax = self.output_time
 
         # initial_params = (self.initial_parameters[0], self.initial_parameters[1], 0, 0)
-        stepsize_controller = PIDController(rtol=self.tolerance, atol=1e-7)
+        # stepsize_controller = PIDController(rtol=self.tolerance, atol=1e-7)
+        stepsize_controller = ConstantStepSize()
         initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
         term = ODETerm(system)
         solver = Dopri5()
