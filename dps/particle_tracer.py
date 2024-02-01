@@ -73,7 +73,7 @@ data = eq.compute(["|B|", "R"], grid=grid)
 
 mu = Energy_SI/(Mass*data["|B|"]) - (vpar_i**2)/(2*data["|B|"])
 
-ini_param = [float(mu), Mass_Charge_Ratio]
+ini_param = jnp.array([mu[0], Mass_Charge_Ratio])
 
 objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1.e-7)
 
