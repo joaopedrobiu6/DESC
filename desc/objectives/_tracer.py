@@ -9,7 +9,7 @@ from desc.grid import Grid
 from jax.experimental.ode import odeint as jax_odeint
 from functools import partial
 from jax import jit
-from diffrax import diffeqsolve, ODETerm, Dopri5, SaveAt, PIDController, ConstantStepSize
+from diffrax import diffeqsolve, ODETerm, Dopri8, SaveAt, PIDController, ConstantStepSize
 
 from .normalization import compute_scaling_factors
 from .objective_funs import _Objective
@@ -160,9 +160,11 @@ class ParticleTracer(_Objective):
         # initial_params = (self.initial_parameters[0], self.initial_parameters[1], 0, 0)
         # stepsize_controller = PIDController(rtol=self.tolerance, atol=1e-7)
         stepsize_controller = ConstantStepSize()
+        # stepsize_controller = PIDController(rtol=self.tolerance, atol=1e-6)
+
         initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
         term = ODETerm(system)
-        solver = Dopri5()
+        solver = Dopri8()
         saveat = SaveAt(ts=t_jax)
         solution = diffeqsolve(term, 
                                solver, 

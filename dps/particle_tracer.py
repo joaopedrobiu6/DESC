@@ -11,7 +11,7 @@ from time import time as timet
 
 initial_time = timet()
 
-filename = "eq_2411_M1_N1.h5"
+filename = "optimized_eq_2411_M1_N1.h5"
 eq = desc.io.load(filename)
 save_text_name = "solution" + filename
 
@@ -43,7 +43,7 @@ def output_to_file(solution, name):
 
 
 # Energy and Mass info
-Energy_eV = 10
+Energy_eV = 100
 Proton_Mass = scipy.constants.proton_mass
 Proton_Charge = scipy.constants.elementary_charge
 Energy_SI = Energy_eV*Proton_Charge
@@ -56,13 +56,13 @@ Charge = 2*Proton_Charge
 psi_i = 0.8
 zeta_i = 0.5
 theta_i = jnp.pi/2
-vpar_i = -0.1*jnp.sqrt(2*Energy_SI/Mass)
+vpar_i = 0.7*jnp.sqrt(2*Energy_SI/Mass)
 ini_cond = jnp.array([float(psi_i), theta_i, zeta_i, float(vpar_i)])
 
 # Time
 tmin = 0
-tmax = 5e-4
-nt = 7500
+tmax = 1e-2
+nt = 500
 time = jnp.linspace(tmin, tmax, nt)
 
 initial_conditions = ini_cond
