@@ -90,3 +90,9 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots()
 ax.bar(["DIFFRAX", "JAX"], [timediff_diffrax, timediff_jax])
+ax.set_ylabel("Time (s)")
+ax.set_xlabel("Integration Library")
+
+# Save the figure and show
+plt.savefig('time_comparison.png')
+plt.show()
