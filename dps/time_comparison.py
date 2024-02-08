@@ -66,6 +66,11 @@ tracer_diffrax = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_
 tracer_diffrax.build()
 solution_diffrax = tracer_diffrax.compute(*tracer_diffrax.xs(eq))
 
+print(solution_diffrax.shape)
+# transform shape from [7500, 4, 1] to [7500, 4]
+solution_diffrax = solution_diffrax[:, :, 0]
+print(solution_diffrax.shape)
+
 time4 = timet()
 timediff_diffrax = time4 - time3
 print(f"Time to compute tracer - DIFFRAX: {time4 - time3}s")
@@ -81,10 +86,9 @@ time6 = timet()
 timediff_jax = time6 - time5
 print(f"Time to compute tracer - JAX: {time6 - time5}s")
 
-solution_jax = jnp.expand_dims(solution_jax, axis=1)
 # Compare Results
-diff=solution_diffrax-solution_jax
-output_to_file(sol=diff, name="solution_difference")
+# diff=solution_diffrax-solution_jax
+# output_to_file(sol=diff, name="solution_difference")
 
 # PLOT BAR PLOT OF TIME TAKEN
 import matplotlib.pyplot as plt
