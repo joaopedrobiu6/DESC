@@ -52,6 +52,9 @@ class ParticleTracer(_Objective):
         "auto" selects forward or reverse mode based on the size of the input and output
         of the objective. Has no effect on self.grad or self.hess which always use
         reverse mode and forward over reverse mode respectively.
+    integration_lib : str
+        Select the library to use for the integration of the system. Can be "diffrax" for the diffrax library,
+        of "jaxint" for the JAX library.
     name : str
         Name of the objective function.
     """
@@ -75,13 +78,15 @@ class ParticleTracer(_Objective):
         compute_option=None,
         tolerance = 1.4e-8,
         deriv_mode = "rev",
-        name="Particle Tracer"
+        integration_lib="diffrax",
+        name="Particle Tracer",
     ):
         self.output_time = output_time
         self.initial_conditions=jnp.asarray(initial_conditions) 
         self.initial_parameters=jnp.asarray(initial_parameters)
         self.compute_option=compute_option
         self.tolerance = tolerance
+        self.lib = integration_lib
         
         if target is None and bounds is None:
             target = 0
@@ -110,9 +115,6 @@ class ParticleTracer(_Objective):
             has_axis=False,
         )
         
-        # self.charge = 1.6e-19
-        # self.mass = 1.673e-27 # CHECK VALUES
-        # self.Energy = 3.52e6*self.charge 
         eq = eq or self._things[0]
 
         if self.compute_option == "optimization" or self.compute_option == "optimization-debug":
@@ -154,31 +156,28 @@ class ParticleTracer(_Objective):
             vpardot = data["vpardot"]
             return jnp.array([psidot, thetadot, zetadot, vpardot])
         
-        # system_jit = jit(system)
         t_jax = self.output_time
-
-        # initial_params = (self.initial_parameters[0], self.initial_parameters[1], 0, 0)
-        # stepsize_controller = PIDController(rtol=self.tolerance, atol=1e-7)
-        stepsize_controller = ConstantStepSize()
-        # stepsize_controller = PIDController(rtol=self.tolerance, atol=1e-6)
-
-        initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
-        term = ODETerm(system)
-        solver = Dopri8()
-        saveat = SaveAt(ts=t_jax)
-        solution = diffeqsolve(term, 
-                               solver, 
-                               t0=t_jax[0], 
-                               t1=t_jax[-1], 
-                               dt0=t_jax[1]-t_jax[0], 
-                               y0=initial_conds, 
-                               saveat=saveat, 
-                               args=self.initial_parameters, 
-                               max_steps=t_jax.size,
-                               stepsize_controller=stepsize_controller)
-
-        # initial_conditions_jax = jnp.array(self.initial_conditions, dtype=jnp.float64)
-        # solution = jax_odeint(partial(system_jit, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
+        
+        if self.lib == "diffrax":
+            stepsize_controller = ConstantStepSize()
+            initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
+            term = ODETerm(jit(system))
+            solver = Dopri8()
+            saveat = SaveAt(ts=t_jax)
+            solution = diffeqsolve(term, 
+                                solver, 
+                                t0=t_jax[0], 
+                                t1=t_jax[-1], 
+                                dt0=t_jax[1]-t_jax[0], 
+                                y0=initial_conds, 
+                                saveat=saveat, 
+                                args=self.initial_parameters, 
+                                max_steps=t_jax.size,
+                                stepsize_controller=stepsize_controller)
+        elif self.lib == "jaxint":
+            initial_conditions_jax = jnp.array(self.initial_conditions, dtype=jnp.float64)
+            system_jit = jit(system)
+            solution = jax_odeint(partial(system_jit, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
 
         if self.compute_option == "optimization":
             return jnp.sum((solution.ys[:, 0] - solution.ys[0, 0]) * (solution.ys[:, 0] - solution.ys[0, 0]), axis=-1)

@@ -7,7 +7,7 @@ from time import time as timet
 import desc.equilibrium
 from desc.objectives import ParticleTracer
 
-from jb_utils import set_mu
+from jb_utils import set_mu, output_to_file
 
 time1 = timet()
 
@@ -61,12 +61,32 @@ ini_param = jnp.array([mu[0], Mass_Charge_Ratio])       # this works
 
 time3 = timet()
 
-# TRACER
-tracer = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1.4e-8)
-tracer.build()
-solution = tracer.compute(*tracer.xs(eq))
+# TRACER DIFFRAX
+tracer_diffrax = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1.4e-8, integration_lib="diffrax")
+tracer_diffrax.build()
+solution_diffrax = tracer_diffrax.compute(*tracer_diffrax.xs(eq))
 
 time4 = timet()
-timediff = time4 - time3
-print(f"Time to compute tracer: {time4 - time3}s")
+timediff_diffrax = time4 - time3
+print(f"Time to compute tracer - DIFFRAX: {time4 - time3}s")
 
+time5 = timet()
+
+# TRACER JAX
+tracer_jax = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1.4e-8, integration_lib="jaxint")
+tracer_jax.build()
+solution_jax = tracer_jax.compute(*tracer_jax.xs(eq))
+
+time6 = timet()
+timediff_jax = time6 - time5
+print(f"Time to compute tracer - JAX: {time6 - time5}s")
+
+# Compare Results
+diff=solution_diffrax-solution_jax
+output_to_file(solution=diff, name="solution_difference")
+
+# PLOT BAR PLOT OF TIME TAKEN
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.bar(["DIFFRAX", "JAX"], [timediff_diffrax, timediff_jax])
