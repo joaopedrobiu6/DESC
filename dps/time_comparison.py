@@ -81,6 +81,7 @@ time6 = timet()
 timediff_jax = time6 - time5
 print(f"Time to compute tracer - JAX: {time6 - time5}s")
 
+solution_jax = jnp.expand_dims(solution_jax, axis=1)
 # Compare Results
 diff=solution_diffrax-solution_jax
 output_to_file(solution=diff, name="solution_difference")
