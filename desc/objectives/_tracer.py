@@ -137,28 +137,29 @@ class ParticleTracer(_Objective):
         if constants is None:
             constants = self.constants
         
-        def system(t = self.output_time, initial_conditions = self.initial_conditions, initial_parameters = self.initial_parameters):
-            #initial conditions
-            psi = initial_conditions[0]
-            theta = initial_conditions[1]
-            zeta = initial_conditions[2]
-            vpar = initial_conditions[3]
-            
-            grid = Grid(jnp.array([jnp.sqrt(psi), theta, zeta]).T, jitable=True, sort=False)
-            transforms = get_transforms(self._data_keys, self._things[0], grid, jitable=True)
-            profiles = get_profiles(self._data_keys, self._things[0], grid, jitable=True)
-            
-            data = compute_fun("desc.equilibrium.equilibrium.Equilibrium", self._data_keys, params, transforms, profiles, mu=initial_parameters[0], m_q=initial_parameters[1], vpar=vpar)
-            
-            psidot = data["psidot"]
-            thetadot = data["thetadot"]
-            zetadot = data["zetadot"]
-            vpardot = data["vpardot"]
-            return jnp.array([psidot, thetadot, zetadot, vpardot])
-        
         t_jax = self.output_time
         
         if self.lib == "diffrax":
+            
+            def system(t = self.output_time, initial_conditions = self.initial_conditions, initial_parameters = self.initial_parameters):
+                #initial conditions
+                psi = initial_conditions[0]
+                theta = initial_conditions[1]
+                zeta = initial_conditions[2]
+                vpar = initial_conditions[3]
+                
+                grid = Grid(jnp.array([jnp.sqrt(psi), theta, zeta]).T, jitable=True, sort=False)
+                transforms = get_transforms(self._data_keys, self._things[0], grid, jitable=True)
+                profiles = get_profiles(self._data_keys, self._things[0], grid, jitable=True)
+                
+                data = compute_fun("desc.equilibrium.equilibrium.Equilibrium", self._data_keys, params, transforms, profiles, mu=initial_parameters[0], m_q=initial_parameters[1], vpar=vpar)
+                
+                psidot = data["psidot"]
+                thetadot = data["thetadot"]
+                zetadot = data["zetadot"]
+                vpardot = data["vpardot"]
+                return jnp.array([psidot, thetadot, zetadot, vpardot])
+
             stepsize_controller = ConstantStepSize()
             initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
             term = ODETerm(jit(system))
@@ -175,6 +176,24 @@ class ParticleTracer(_Objective):
                                 max_steps=t_jax.size,
                                 stepsize_controller=stepsize_controller)
         elif self.lib == "jaxint":
+            
+            def system(initial_conditions = self.initial_conditions, t = self.output_time, initial_parameters = self.initial_parameters):
+                #initial conditions
+                psi, theta, zeta, vpar = initial_conditions
+
+                grid = Grid(jnp.array([jnp.sqrt(psi), theta, zeta]).T, jitable=True, sort=False)
+                transforms = get_transforms(self._data_keys, self._things[0], grid, jitable=True)
+                profiles = get_profiles(self._data_keys, self._things[0], grid, jitable=True)
+                
+                data = compute_fun("desc.equilibrium.equilibrium.Equilibrium", self._data_keys, params, transforms, profiles, mu=initial_parameters[0], m_q=initial_parameters[1], vpar=vpar)
+                
+                psidot = data["psidot"]
+                thetadot = data["thetadot"]
+                zetadot = data["zetadot"]
+                vpardot = data["vpardot"]
+
+                return jnp.array([psidot, thetadot, zetadot, vpardot])
+        
             initial_conditions_jax = jnp.array(self.initial_conditions, dtype=jnp.float64)
             system_jit = jit(system)
             solution = jax_odeint(partial(system_jit, initial_parameters=self.initial_parameters), initial_conditions_jax, t_jax, rtol = self.tolerance)
