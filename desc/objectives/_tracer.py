@@ -235,7 +235,10 @@ class ParticleTracer(_Objective):
 
             return jnp.sum((solution[:, 0] - solution[0, 0]) * (solution[:, 0] - solution[0, 0]), axis=-1)
         elif self.compute_option == "tracer":
-            return solution.ys
+            if self.lib == "diffrax":
+                return solution.ys
+            elif self.lib == "jaxint":
+                return solution
         elif self.compute_option == "average psi":
             return jnp.mean(solution[:, 0])
         elif self.compute_option == "average theta":
