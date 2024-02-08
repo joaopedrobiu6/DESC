@@ -87,8 +87,8 @@ timediff_jax = time6 - time5
 print(f"Time to compute tracer - JAX: {time6 - time5}s")
 
 # Compare Results
-# diff=solution_diffrax-solution_jax
-# output_to_file(sol=diff, name="solution_difference")
+diff=solution_diffrax-solution_jax
+output_to_file(sol=diff, name="solution_difference")
 
 # PLOT BAR PLOT OF TIME TAKEN
 import matplotlib.pyplot as plt
