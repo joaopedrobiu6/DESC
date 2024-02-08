@@ -164,7 +164,7 @@ class ParticleTracer(_Objective):
             stepsize_controller = PIDController(rtol=self.tolerance, atol=1.4e-8)
             initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
             term = ODETerm(jit(system))
-            solver = Dopri8()
+            solver = Dopri5()
             saveat = SaveAt(ts=t_jax)
             solution = diffeqsolve(term, 
                                 solver, 
