@@ -88,7 +88,7 @@ print(f"Time to compute tracer - JAX: {time6 - time5}s")
 
 # Compare Results
 diff=solution_diffrax-solution_jax
-output_to_file(sol=diff, name="solution_difference")
+output_to_file(sol=diff, name="solution_difference_dopri5")
 
 # PLOT BAR PLOT OF TIME TAKEN
 import matplotlib.pyplot as plt
@@ -99,5 +99,5 @@ ax.set_ylabel("Time (s)")
 ax.set_xlabel("Integration Library")
 
 # Save the figure and show
-plt.savefig('time_comparison.png')
+plt.savefig('time_comparison_dopri5.png')
 plt.show()
