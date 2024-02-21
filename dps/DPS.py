@@ -9,9 +9,9 @@ from time import time as timet
 import desc.equilibrium
 from desc.objectives import (ParticleTracer, AspectRatio, ObjectiveFunction, ForceBalance, 
                                 FixBoundaryR, FixBoundaryZ, FixPressure, FixIota, FixPsi, FixParameter)
-from desc.geometry import FourierRZToroidalSurface
-from desc.equilibrium import Equilibrium
-from desc.continuation import solve_continuation_automatic
+# from desc.geometry import FourierRZToroidalSurface
+# from desc.equilibrium import Equilibrium
+# from desc.continuation import solve_continuation_automatic
 
 
 initial_time = timet()
