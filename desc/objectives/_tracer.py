@@ -174,8 +174,9 @@ class ParticleTracer(_Objective):
                                 y0=initial_conds, 
                                 saveat=saveat, 
                                 args=self.initial_parameters, 
-                                max_steps=t_jax.size,
+                                max_steps=1.5*t_jax.size,
                                 stepsize_controller=stepsize_controller)
+            
         elif self.lib == "jaxint":
             
             def system(initial_conditions = self.initial_conditions, t = self.output_time, initial_parameters = self.initial_parameters):
