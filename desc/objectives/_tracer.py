@@ -160,8 +160,8 @@ class ParticleTracer(_Objective):
                 vpardot = data["vpardot"]
                 return jnp.array([psidot, thetadot, zetadot, vpardot])
 
-            # stepsize_controller = ConstantStepSize()
-            stepsize_controller = PIDController(rtol=self.tolerance, atol=1.4e-8)
+            stepsize_controller = ConstantStepSize()
+            # stepsize_controller = PIDController(rtol=self.tolerance, atol=1.4e-8)
             initial_conds = jnp.expand_dims(self.initial_conditions, axis=1)
             term = ODETerm(jit(system))
             solver = Dopri5()
