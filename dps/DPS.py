@@ -135,13 +135,15 @@ mu = Energy_SI/(Mass*data["|B|"]) - (vpar_i**2)/(2*data["|B|"])
 # ini_param = jnp.array([float(mu), Mass_Charge_Ratio]) # this is deprecated!
 ini_param = jnp.array([mu[0], Mass_Charge_Ratio])       # this works
 
+lib = "diffrax"
+print(f"Using: {lib}")
 
 intermediate_time = timet()
 print(f"\nTime from beginning until here: {intermediate_time - initial_time}s\n")
 
 # Objective Function
 objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, 
-                           compute_option="optimization", tolerance=1e-8, deriv_mode="fwd", integration_lib="diffrax")
+                           compute_option="optimization", tolerance=1e-8, deriv_mode="fwd", integration_lib=lib)
 objective.build()
 
 # ar = jnp.copy(eq.compute("R0/a")["R0/a"])
