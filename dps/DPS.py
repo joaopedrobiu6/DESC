@@ -100,7 +100,7 @@ eq._current = None
 # eq._pressure = None
 
 # Energy and Mass info
-Energy_eV = 10 #1 # eV (3.52e6 eV proton energy)
+Energy_eV = 10 #10 # eV (3.52e6 eV proton energy)
 Proton_Mass = scipy.constants.proton_mass
 Proton_Charge = scipy.constants.elementary_charge
 Energy_SI = Energy_eV*Proton_Charge
@@ -113,7 +113,7 @@ Charge = 2*Proton_Charge
 psi_i = 0.8
 zeta_i = 0.5
 theta_i = jnp.pi/2
-vpar_i = -0.1*jnp.sqrt(2*Energy_SI/Mass)
+vpar_i = -0.1*jnp.sqrt(2*Energy_SI/Mass) #-0.1
 ini_cond = jnp.array([float(psi_i), theta_i, zeta_i, float(vpar_i)])
 
 # Time
