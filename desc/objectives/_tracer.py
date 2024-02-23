@@ -208,7 +208,7 @@ class ParticleTracer(_Objective):
         
         elif self.compute_option == "tracer":
             if self.lib == "diffrax":
-                return solution.ys
+                return solution.ys[:, :, 0]
             elif self.lib == "jaxint":
                 return solution
 
