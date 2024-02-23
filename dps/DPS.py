@@ -119,7 +119,7 @@ ini_cond = jnp.array([float(psi_i), theta_i, zeta_i, float(vpar_i)])
 # Time
 tmin = 0
 tmax = 5e-2
-nt = 7500
+nt = 5000
 time = jnp.linspace(tmin, tmax, nt)
 
 # Initial State
@@ -141,7 +141,7 @@ print(f"\nTime from beginning until here: {intermediate_time - initial_time}s\n"
 
 # Objective Function
 objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, 
-                           compute_option="optimization", tolerance=1e-8, deriv_mode="fwd", integration_lib="jaxint")
+                           compute_option="optimization", tolerance=1e-8, deriv_mode="fwd", integration_lib="diffrax")
 objective.build()
 
 # ar = jnp.copy(eq.compute("R0/a")["R0/a"])
@@ -194,7 +194,7 @@ print("\n*************** TRACING ***************")
 ################################################################################################################
 ################################################################################################################
 
-tracing_original = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1.4e-8)
+tracing_original = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1e-8)
 
 # Compute tracing original equilibrium
 eq_again = desc.io.load(eq_file)
@@ -214,7 +214,7 @@ opt_eq = desc.io.load(opt_file)
 opt_eq._iota = opt_eq.get_profile("iota").to_powerseries(order=opt_eq.L, sym=True)
 opt_eq._current = None
 
-tracing_optimized = ParticleTracer(eq=opt_eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1.4e-8)
+tracing_optimized = ParticleTracer(eq=opt_eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1e-8)
 
 intermediate_time_7 = timet()
 tracing_optimized.build()
