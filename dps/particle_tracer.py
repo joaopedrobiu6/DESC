@@ -137,7 +137,7 @@ def Energy_Plot(solution=solution, save_name="Energy_Plot.png"):
 
 Trajectory_Plot()
 Quantity_Plot()
-# Energy_Plot()
+Energy_Plot()
 
 print("Particle Tracer Complete")
 if Trajectory_Plot or Quantity_Plot or Energy_Plot:
