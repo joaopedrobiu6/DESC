@@ -140,7 +140,8 @@ intermediate_time = timet()
 print(f"\nTime from beginning until here: {intermediate_time - initial_time}s\n")
 
 # Objective Function
-objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="optimization", tolerance=1e-8, deriv_mode="fwd")
+objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, 
+                           compute_option="optimization", tolerance=1e-8, deriv_mode="fwd", integration_lib="jaxint")
 objective.build()
 
 # ar = jnp.copy(eq.compute("R0/a")["R0/a"])
@@ -173,7 +174,7 @@ print(f"\nTime to build and compile ObjFunction: {intermediate_time_3 - intermed
 
 R_modes = jnp.array([[0, 0, 0]])
 constraints = (ForceBalance(eq, bounds=(-1e-3, 1e-3)), FixBoundaryR(eq, modes=R_modes), FixBoundaryZ(eq, modes=False), FixPsi(eq), FixPressure(eq)) #FixPressure(eq), FixCurrent(eq), FixIota(eq), ForceBalance(eq, bounds=(-1e-3, 1e-3))
-eq.optimize(objective=ObjFunction, optimizer = "fmin-auglag-bfgs", constraints=constraints, verbose=3, maxiter=100, copy=False)
+eq.optimize(objective=ObjFunction, optimizer = "fmin-auglag-bfgs", constraints=constraints, verbose=3, maxiter=100, ftol=1e-5, copy=False)
 eq.save(opt_file)
 
 intermediate_time_4 = timet()
