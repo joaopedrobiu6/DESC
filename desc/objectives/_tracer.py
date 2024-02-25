@@ -52,7 +52,8 @@ class ParticleTracer(_Objective):
         "auto" selects forward or reverse mode based on the size of the input and output
         of the objective. Has no effect on self.grad or self.hess which always use
         reverse mode and forward over reverse mode respectively.
-    integration_lib : str
+        "fwd" must be used for optimization. 
+    lib : str
         Select the library to use for the integration of the system. Can be "diffrax" for the diffrax library,
         of "jaxint" for the JAX library.
     name : str
@@ -78,7 +79,7 @@ class ParticleTracer(_Objective):
         compute_option=None,
         tolerance = 1.4e-8,
         deriv_mode = "rev",
-        integration_lib="diffrax",
+        lib="diffrax",
         name="Particle Tracer",
     ):
         self.output_time = output_time
@@ -86,7 +87,7 @@ class ParticleTracer(_Objective):
         self.initial_parameters=jnp.asarray(initial_parameters)
         self.compute_option=compute_option
         self.tolerance = tolerance
-        self.lib = integration_lib
+        self.lib = lib
         
         if target is None and bounds is None:
             target = 0

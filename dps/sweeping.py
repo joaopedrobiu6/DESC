@@ -18,10 +18,36 @@ initial_time = timet()
 
 # INITIAL STATE AND PARAMETERS
 # Energy and Mass info
-Energy_eV = 1 #3.52e6
+# Energy_eV = 10 #3.52e6
+# Proton_Mass = scipy.constants.proton_mass
+# Proton_Charge = scipy.constants.elementary_charge
+
+# Energy_SI = Energy_eV*Proton_Charge
+
+# # Particle Info
+# Mass = 4*Proton_Mass
+# Charge = 2*Proton_Charge
+
+# # Initial State
+# psi_i = 0.8
+# zeta_i = 0
+# theta_i = 0
+# vpar_i = -0.1*jnp.sqrt(2*Energy_SI/Mass)
+# ini_cond = [float(psi_i), theta_i, zeta_i, float(vpar_i)]
+
+# # Time
+# tmin = 0
+# tmax = 1e-4
+# nt = 200
+# time = jnp.linspace(tmin, tmax, nt)
+
+# initial_conditions = ini_cond
+# Mass_Charge_Ratio = Mass/Charge
+
+# Energy and Mass info
+Energy_eV = 10 #10 # eV (3.52e6 eV proton energy)
 Proton_Mass = scipy.constants.proton_mass
 Proton_Charge = scipy.constants.elementary_charge
-
 Energy_SI = Energy_eV*Proton_Charge
 
 # Particle Info
@@ -29,18 +55,19 @@ Mass = 4*Proton_Mass
 Charge = 2*Proton_Charge
 
 # Initial State
-psi_i = 0.2
-zeta_i = 0
-theta_i = 0
-vpar_i = 0.7*jnp.sqrt(2*Energy_SI/Mass)
-ini_cond = [float(psi_i), theta_i, zeta_i, float(vpar_i)]
+psi_i = 0.8
+zeta_i = 0.5
+theta_i = jnp.pi/2
+vpar_i = -0.1*jnp.sqrt(2*Energy_SI/Mass) #-0.1
+ini_cond = jnp.array([float(psi_i), theta_i, zeta_i, float(vpar_i)])
 
 # Time
 tmin = 0
-tmax = 1e-4
+tmax = 5e-2
 nt = 200
 time = jnp.linspace(tmin, tmax, nt)
 
+# Initial State
 initial_conditions = ini_cond
 Mass_Charge_Ratio = Mass/Charge
 
@@ -65,16 +92,18 @@ for R11 in r11:
     eq._current = None
     # eq.solve()
 
+    # Mu 
     grid = Grid(jnp.array([jnp.sqrt(psi_i), theta_i, zeta_i]).T, jitable=True, sort=False)
     data = eq.compute("|B|", grid=grid)
-
     mu = Energy_SI/(Mass*data["|B|"]) - (vpar_i**2)/(2*data["|B|"])
 
-    ini_param = [float(mu), Mass_Charge_Ratio]
+    # Initial Parameters
+    # ini_param = jnp.array([float(mu), Mass_Charge_Ratio]) # this is deprecated!
+    ini_param = jnp.array([mu[0], Mass_Charge_Ratio])       # this works
 
     intermediate_time = timet()
 
-    objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="optimization", tolerance=1.4e-8)
+    objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="optimization", tolerance=1.4e-8, lib="diffrax", deriv_mode="fwd")
 
     objective.build()
     solution = objective.compute(*objective.xs(eq))
