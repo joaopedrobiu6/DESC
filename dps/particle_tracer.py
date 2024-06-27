@@ -68,14 +68,15 @@ time = jnp.linspace(tmin, tmax, nt)
 initial_conditions = ini_cond
 Mass_Charge_Ratio = Mass/Charge
 
-grid = Grid(jnp.array([jnp.sqrt(psi_i), theta_i, zeta_i]).T, jitable=True, sort=False)
+grid = Grid(jnp.array([jnp.sqrt(psi_i), theta_i, zeta_i]).T, jitable=False, sort=False)
 data = eq.compute(["|B|", "R"], grid=grid)
 
 mu = Energy_SI/(Mass*data["|B|"]) - (vpar_i**2)/(2*data["|B|"])
 
 ini_param = jnp.array([mu[0], Mass_Charge_Ratio])
 
-objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, initial_parameters=ini_param, compute_option="tracer", tolerance=1.e-7)
+objective = ParticleTracer(eq=eq, output_time=time, initial_conditions=ini_cond, 
+                           initial_parameters=ini_param, compute_option="tracer", tolerance=1.e-7, lib="jaxint")
 
 print(f"Initial Velocity (parallel component): {vpar_i}")
 print(f"Radius: {data['R']}")

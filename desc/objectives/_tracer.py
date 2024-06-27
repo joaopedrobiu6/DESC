@@ -149,7 +149,7 @@ class ParticleTracer(_Objective):
                 zeta = initial_conditions[2]
                 vpar = initial_conditions[3]
                 
-                grid = Grid(jnp.array([jnp.sqrt(psi), theta, zeta]).T, jitable=True, sort=False)
+                grid = Grid(nodes = jnp.array([jnp.sqrt(psi), theta, zeta]).T, spacing=jnp.array([0, 0, 0]).T, jitable=True, sort=False)
                 transforms = get_transforms(self._data_keys, self._things[0], grid, jitable=True)
                 profiles = get_profiles(self._data_keys, self._things[0], grid, jitable=True)
                 
@@ -184,7 +184,7 @@ class ParticleTracer(_Objective):
                 #initial conditions
                 psi, theta, zeta, vpar = initial_conditions
 
-                grid = Grid(jnp.array([jnp.sqrt(psi), theta, zeta]).T, jitable=True, sort=False)
+                grid = Grid(jnp.array([jnp.sqrt(psi), theta, zeta]).T, jnp.array([0, 0, 0]).T, jitable=True, sort=False)
                 transforms = get_transforms(self._data_keys, self._things[0], grid, jitable=True)
                 profiles = get_profiles(self._data_keys, self._things[0], grid, jitable=True)
                 
