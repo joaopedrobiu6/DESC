@@ -1140,6 +1140,7 @@ def _e_sup_zeta_rz(params, transforms, profiles, data, **kwargs):
         / data["sqrt(g)"] ** 2
         + 2 * temp.T * data["sqrt(g)_r"] * data["sqrt(g)_z"] / data["sqrt(g)"] ** 3
     ).T
+
     return data
 
 
@@ -1183,6 +1184,7 @@ def _e_sup_zeta_t(params, transforms, profiles, data, **kwargs):
             * safediv(data["sqrt(g)_rt"], data["sqrt(g)_r"] ** 2)
         ).T,
     )
+
     return data
 
 
@@ -1233,6 +1235,7 @@ def _e_sup_zeta_tt(params, transforms, profiles, data, **kwargs):
         / data["sqrt(g)"] ** 2
         + 2 * temp.T * data["sqrt(g)_t"] * data["sqrt(g)_t"] / data["sqrt(g)"] ** 3
     ).T
+
     return data
 
 
@@ -1288,6 +1291,7 @@ def _e_sup_zeta_tz(params, transforms, profiles, data, **kwargs):
         / data["sqrt(g)"] ** 2
         + 2 * temp.T * data["sqrt(g)_t"] * data["sqrt(g)_z"] / data["sqrt(g)"] ** 3
     ).T
+
     return data
 
 
@@ -1331,6 +1335,7 @@ def _e_sup_zeta_z(params, transforms, profiles, data, **kwargs):
             * safediv(data["sqrt(g)_rz"], data["sqrt(g)_r"] ** 2)
         ).T,
     )
+
     return data
 
 
@@ -1397,10 +1402,16 @@ def _e_sup_zeta_zz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["e_zeta", "phi_z"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+        "desc.geometry.core.Surface",
+    ],
 )
 def _e_sub_phi(params, transforms, profiles, data, **kwargs):
     # dX/dphi at const r,t = dX/dz * dz/dphi = dX/dz / (dphi/dz)
     data["e_phi"] = (data["e_zeta"].T / data["phi_z"]).T
+
     return data
 
 
@@ -1416,11 +1427,16 @@ def _e_sub_phi(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_r", "Z_r", "omega_r"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
 )
 def _e_sub_rho(params, transforms, profiles, data, **kwargs):
     # At the magnetic axis, this function returns the multivalued map whose
     # image is the set { 𝐞ᵨ | ρ=0 }.
     data["e_rho"] = jnp.array([data["R_r"], data["R"] * data["omega_r"], data["Z_r"]]).T
+
     return data
 
 
@@ -1436,6 +1452,10 @@ def _e_sub_rho(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_r", "R_rr", "Z_rr", "omega_r", "omega_rr"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
 )
 def _e_sub_rho_r(params, transforms, profiles, data, **kwargs):
     # e_rho_r = a^i e_i, where the a^i are the components specified below and the
@@ -1448,6 +1468,7 @@ def _e_sub_rho_r(params, transforms, profiles, data, **kwargs):
             data["Z_rr"],
         ]
     ).T
+
     return data
 
 
@@ -1465,7 +1486,20 @@ def _e_sub_rho_r(params, transforms, profiles, data, **kwargs):
     transforms={},
     profiles=[],
     coordinates="rtz",
-    data=["R", "R_r", "R_rr", "R_rrr", "Z_rrr", "omega_r", "omega_rr", "omega_rrr"],
+    data=[
+        "R",
+        "R_r",
+        "R_rr",
+        "R_rrr",
+        "Z_rrr",
+        "omega_r",
+        "omega_rr",
+        "omega_rrr",
+    ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
 )
 def _e_sub_rho_rr(params, transforms, profiles, data, **kwargs):
     data["e_rho_rr"] = jnp.array(
@@ -1478,6 +1512,7 @@ def _e_sub_rho_rr(params, transforms, profiles, data, **kwargs):
             data["Z_rrr"],
         ]
     ).T
+
     return data
 
 
@@ -1506,6 +1541,10 @@ def _e_sub_rho_rr(params, transforms, profiles, data, **kwargs):
         "omega_rrr",
         "omega_rrrr",
     ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
 )
 def _e_sub_rho_rrr(params, transforms, profiles, data, **kwargs):
     data["e_rho_rrr"] = jnp.array(
@@ -1527,6 +1566,7 @@ def _e_sub_rho_rrr(params, transforms, profiles, data, **kwargs):
             data["Z_rrrr"],
         ]
     ).T
+
     return data
 
 
@@ -1562,6 +1602,11 @@ def _e_sub_rho_rrr(params, transforms, profiles, data, **kwargs):
         "omega_rt",
         "omega_t",
     ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
+    aliases=["e_theta_rrr"],
 )
 def _e_sub_rho_rrt(params, transforms, profiles, data, **kwargs):
     data["e_rho_rrt"] = jnp.array(
@@ -1602,6 +1647,7 @@ def _e_sub_rho_rrt(params, transforms, profiles, data, **kwargs):
             data["Z_rrrt"],
         ]
     ).T
+
     return data
 
 
@@ -1637,66 +1683,52 @@ def _e_sub_rho_rrt(params, transforms, profiles, data, **kwargs):
         "omega_rz",
         "omega_z",
     ],
+    aliases=["e_zeta_rrr"],
 )
 def _e_sub_rho_rrz(params, transforms, profiles, data, **kwargs):
     data["e_rho_rrz"] = jnp.array(
         [
-            -2 * data["omega_rz"] * data["R_r"] * data["omega_r"]
-            - 2
-            * (1 + data["omega_z"])
+            -3 * data["R"] * data["omega_rrz"] * data["omega_r"]
+            - 3
+            * data["omega_rz"]
+            * (2 * data["R_r"] * data["omega_r"] + data["R"] * data["omega_rr"])
+            - 3
+            * data["omega_z"]
             * (data["R_rr"] * data["omega_r"] + data["R_r"] * data["omega_rr"])
-            - data["R_rz"] * data["omega_r"] ** 2
-            - 2 * data["R_z"] * data["omega_r"] * data["omega_rr"]
-            - 2 * data["R_r"] * data["omega_r"] * data["omega_rz"]
-            - 2
+            - (1 + data["omega_z"])
             * data["R"]
+            * (data["omega_rrr"] - data["omega_r"] ** 3)
+            - 3
+            * data["omega_r"]
             * (
-                data["omega_rr"] * data["omega_rz"]
-                + data["omega_r"] * data["omega_rrz"]
-            )
-            - data["R_r"] * (1 + data["omega_z"]) * data["omega_rr"]
-            - data["R"]
-            * (
-                data["omega_rz"] * data["omega_rr"]
-                + (1 + data["omega_z"]) * data["omega_rrr"]
-            )
-            + data["R_rrrz"]
-            - data["omega_r"]
-            * (
-                2 * data["omega_r"] * data["R_rz"]
-                + 2 * data["R_r"] * data["omega_rz"]
-                + (1 + data["omega_z"]) * data["R_rr"]
+                data["R_rz"] * data["omega_r"]
                 + data["R_z"] * data["omega_rr"]
-                - data["R"]
-                * ((1 + data["omega_z"]) * data["omega_r"] ** 2 - data["omega_rrz"])
-            ),
-            2 * data["omega_rr"] * data["R_rz"]
-            + 2 * data["omega_r"] * data["R_rrz"]
-            + 2 * data["R_rr"] * data["omega_rz"]
-            + 2 * data["R_r"] * data["omega_rrz"]
-            + data["omega_rz"] * data["R_rr"]
-            + (1 + data["omega_z"]) * data["R_rrr"]
-            + data["R_rz"] * data["omega_rr"]
-            + data["R_z"] * data["omega_rrr"]
-            - data["R_r"]
-            * ((1 + data["omega_z"]) * data["omega_r"] ** 2 - data["omega_rrz"])
-            - data["R"]
-            * (
-                data["omega_rz"] * data["omega_r"] ** 2
-                + 2 * (1 + data["omega_z"]) * data["omega_r"] * data["omega_rr"]
-                - data["omega_rrrz"]
+                + data["R_rr"]
             )
-            + data["omega_r"]
+            - 3 * data["R_r"] * data["omega_rr"]
+            + data["R_rrrz"],
+            3
+            * data["R_r"]
+            * (data["omega_rrz"] - (1 + data["omega_z"]) * data["omega_r"] ** 2)
+            + 3 * data["omega_rz"] * data["R_rr"]
+            + data["R"]
             * (
-                -2 * (1 + data["omega_z"]) * data["R_r"] * data["omega_r"]
-                - data["R_z"] * data["omega_r"] ** 2
-                - 2 * data["R"] * data["omega_r"] * data["omega_rz"]
-                - data["R"] * (1 + data["omega_z"]) * data["omega_rr"]
-                + data["R_rrz"]
-            ),
+                data["omega_rrrz"]
+                - 3
+                * data["omega_r"]
+                * (
+                    data["omega_rz"] * data["omega_r"]
+                    + (1 + data["omega_z"]) * data["omega_rr"]
+                )
+            )
+            + (1 + data["omega_z"]) * data["R_rrr"]
+            + 3 * data["R_rrz"] * data["omega_r"]
+            + 3 * data["R_rz"] * data["omega_rr"]
+            + data["R_z"] * (data["omega_rrr"] - data["omega_r"] ** 3),
             data["Z_rrrz"],
         ]
     ).T
+
     return data
 
 
@@ -1728,7 +1760,11 @@ def _e_sub_rho_rrz(params, transforms, profiles, data, **kwargs):
         "omega_rt",
         "omega_t",
     ],
-    aliases=["x_rrt", "x_rtr", "x_trr"],
+    aliases=["x_rrt", "x_rtr", "x_trr", "e_theta_rr"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
 )
 def _e_sub_rho_rt(params, transforms, profiles, data, **kwargs):
     data["e_rho_rt"] = jnp.array(
@@ -1746,6 +1782,7 @@ def _e_sub_rho_rt(params, transforms, profiles, data, **kwargs):
             data["Z_rrt"],
         ]
     ).T
+
     return data
 
 
@@ -1783,6 +1820,11 @@ def _e_sub_rho_rt(params, transforms, profiles, data, **kwargs):
         "omega_t",
         "omega_tt",
     ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
+    aliases=["e_theta_rrt"],
 )
 def _e_sub_rho_rtt(params, transforms, profiles, data, **kwargs):
     data["e_rho_rtt"] = jnp.array(
@@ -1822,6 +1864,7 @@ def _e_sub_rho_rtt(params, transforms, profiles, data, **kwargs):
             data["Z_rrtt"],
         ]
     ).T
+
     return data
 
 
@@ -1865,6 +1908,7 @@ def _e_sub_rho_rtt(params, transforms, profiles, data, **kwargs):
         "omega_tz",
         "omega_z",
     ],
+    aliases=["e_theta_rrz", "e_zeta_rrt"],
 )
 def _e_sub_rho_rtz(params, transforms, profiles, data, **kwargs):
     data["e_rho_rtz"] = jnp.array(
@@ -1957,6 +2001,7 @@ def _e_sub_rho_rtz(params, transforms, profiles, data, **kwargs):
             data["Z_rrtz"],
         ]
     ).T
+
     return data
 
 
@@ -1988,6 +2033,7 @@ def _e_sub_rho_rtz(params, transforms, profiles, data, **kwargs):
         "omega_rz",
         "omega_z",
     ],
+    aliases=["e_zeta_rr"],
 )
 def _e_sub_rho_rz(params, transforms, profiles, data, **kwargs):
     data["e_rho_rz"] = jnp.array(
@@ -2006,6 +2052,7 @@ def _e_sub_rho_rz(params, transforms, profiles, data, **kwargs):
             data["Z_rrz"],
         ]
     ).T
+
     return data
 
 
@@ -2043,6 +2090,7 @@ def _e_sub_rho_rz(params, transforms, profiles, data, **kwargs):
         "omega_z",
         "omega_zz",
     ],
+    aliases=["e_zeta_rrz"],
 )
 def _e_sub_rho_rzz(params, transforms, profiles, data, **kwargs):
     data["e_rho_rzz"] = jnp.array(
@@ -2103,6 +2151,7 @@ def _e_sub_rho_rzz(params, transforms, profiles, data, **kwargs):
             data["Z_rrzz"],
         ]
     ).T
+
     return data
 
 
@@ -2118,8 +2167,15 @@ def _e_sub_rho_rzz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_r", "R_rt", "R_t", "Z_rt", "omega_r", "omega_rt", "omega_t"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
+    aliases=["e_theta_r"],
 )
 def _e_sub_rho_t(params, transforms, profiles, data, **kwargs):
+    # At the magnetic axis, this function returns the multivalued map whose
+    # image is the set { ∂ᵨ 𝐞_θ | ρ=0 }
     data["e_rho_t"] = jnp.array(
         [
             -data["R"] * data["omega_t"] * data["omega_r"] + data["R_rt"],
@@ -2129,6 +2185,7 @@ def _e_sub_rho_t(params, transforms, profiles, data, **kwargs):
             data["Z_rt"],
         ]
     ).T
+
     return data
 
 
@@ -2160,6 +2217,11 @@ def _e_sub_rho_t(params, transforms, profiles, data, **kwargs):
         "omega_t",
         "omega_tt",
     ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
+    aliases=["e_theta_rt"],
 )
 def _e_sub_rho_tt(params, transforms, profiles, data, **kwargs):
     data["e_rho_tt"] = jnp.array(
@@ -2178,6 +2240,7 @@ def _e_sub_rho_tt(params, transforms, profiles, data, **kwargs):
             data["Z_rtt"],
         ]
     ).T
+
     return data
 
 
@@ -2213,6 +2276,7 @@ def _e_sub_rho_tt(params, transforms, profiles, data, **kwargs):
         "omega_tz",
         "omega_z",
     ],
+    aliases=["e_theta_rz", "e_zeta_rt"],
 )
 def _e_sub_rho_tz(params, transforms, profiles, data, **kwargs):
     data["e_rho_tz"] = jnp.array(
@@ -2241,6 +2305,7 @@ def _e_sub_rho_tz(params, transforms, profiles, data, **kwargs):
             data["Z_rtz"],
         ]
     ).T
+
     return data
 
 
@@ -2256,6 +2321,7 @@ def _e_sub_rho_tz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_r", "R_rz", "R_z", "Z_rz", "omega_r", "omega_rz", "omega_z"],
+    aliases=["e_zeta_r"],
 )
 def _e_sub_rho_z(params, transforms, profiles, data, **kwargs):
     data["e_rho_z"] = jnp.array(
@@ -2267,6 +2333,7 @@ def _e_sub_rho_z(params, transforms, profiles, data, **kwargs):
             data["Z_rz"],
         ]
     ).T
+
     return data
 
 
@@ -2298,6 +2365,7 @@ def _e_sub_rho_z(params, transforms, profiles, data, **kwargs):
         "omega_z",
         "omega_zz",
     ],
+    aliases=["e_zeta_rz"],
 )
 def _e_sub_rho_zz(params, transforms, profiles, data, **kwargs):
     data["e_rho_zz"] = jnp.array(
@@ -2316,6 +2384,7 @@ def _e_sub_rho_zz(params, transforms, profiles, data, **kwargs):
             data["Z_rzz"],
         ]
     ).T
+
     return data
 
 
@@ -2331,11 +2400,16 @@ def _e_sub_rho_zz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_t", "Z_t", "omega_t"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.core.Surface",
+    ],
 )
 def _e_sub_theta(params, transforms, profiles, data, **kwargs):
     data["e_theta"] = jnp.array(
         [data["R_t"], data["R"] * data["omega_t"], data["Z_t"]]
     ).T
+
     return data
 
 
@@ -2360,6 +2434,7 @@ def _e_sub_theta_over_sqrt_g(params, transforms, profiles, data, **kwargs):
         safediv(data["e_theta"].T, data["sqrt(g)"]).T,
         lambda: safediv(data["e_theta_r"].T, data["sqrt(g)_r"]).T,
     )
+
     return data
 
 
@@ -2379,438 +2454,7 @@ def _e_sub_theta_over_sqrt_g(params, transforms, profiles, data, **kwargs):
 def _e_sub_theta_pest(params, transforms, profiles, data, **kwargs):
     # dX/dv at const r,z = dX/dt * dt/dv / dX/dt / dv/dt
     data["e_theta_PEST"] = (data["e_theta"].T / data["theta_PEST_t"]).T
-    return data
 
-
-@register_compute_fun(
-    name="e_theta_r",
-    label="\\partial_{\\rho} \\mathbf{e}_{\\theta}",
-    units="m",
-    units_long="meters",
-    description="Covariant Poloidal basis vector, derivative wrt radial coordinate",
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=["R", "R_r", "R_rt", "R_t", "Z_rt", "omega_r", "omega_rt", "omega_t"],
-)
-def _e_sub_theta_r(params, transforms, profiles, data, **kwargs):
-    # At the magnetic axis, this function returns the multivalued map whose
-    # image is the set { ∂ᵨ 𝐞_θ | ρ=0 }
-    data["e_theta_r"] = jnp.array(
-        [
-            -data["R"] * data["omega_t"] * data["omega_r"] + data["R_rt"],
-            data["omega_t"] * data["R_r"]
-            + data["R_t"] * data["omega_r"]
-            + data["R"] * data["omega_rt"],
-            data["Z_rt"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_theta_rr",
-    label="\\partial_{\\rho \\rho} \\mathbf{e}_{\\theta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Poloidal basis vector, second derivative wrt radial and radial"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rr",
-        "R_rrt",
-        "R_rt",
-        "R_t",
-        "Z_rrt",
-        "omega_r",
-        "omega_rr",
-        "omega_rrt",
-        "omega_rt",
-        "omega_t",
-    ],
-)
-def _e_sub_theta_rr(params, transforms, profiles, data, **kwargs):
-    data["e_theta_rr"] = jnp.array(
-        [
-            -data["R_t"] * data["omega_r"] ** 2
-            - 2 * data["R"] * data["omega_r"] * data["omega_rt"]
-            - data["omega_t"]
-            * (2 * data["R_r"] * data["omega_r"] + data["R"] * data["omega_rr"])
-            + data["R_rrt"],
-            2 * data["omega_r"] * data["R_rt"]
-            + 2 * data["R_r"] * data["omega_rt"]
-            + data["omega_t"] * data["R_rr"]
-            + data["R_t"] * data["omega_rr"]
-            + data["R"] * (-data["omega_t"] * data["omega_r"] ** 2 + data["omega_rrt"]),
-            data["Z_rrt"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_theta_rrr",
-    label="\\partial_{\\rho \\rho \\rho} \\mathbf{e}_{\\theta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Poloidal basis vector, third derivative wrt radial coordinate"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_t",
-        "R_rr",
-        "R_rt",
-        "R_rrr",
-        "R_rrt",
-        "R_rrrt",
-        "Z_rrrt",
-        "omega_r",
-        "omega_t",
-        "omega_rr",
-        "omega_rt",
-        "omega_rrr",
-        "omega_rrt",
-        "omega_rrrt",
-    ],
-)
-def _e_sub_theta_rrr(params, transforms, profiles, data, **kwargs):
-    data["e_theta_rrr"] = jnp.array(
-        [
-            -3 * data["omega_rrt"] * data["R"] * data["omega_r"]
-            - 3
-            * data["omega_rt"]
-            * (2 * data["R_r"] * data["omega_r"] + data["R"] * data["omega_rr"])
-            - data["omega_t"]
-            * (
-                3 * data["R_rr"] * data["omega_r"]
-                + 3 * data["R_r"] * data["omega_rr"]
-                + data["R"] * data["omega_rrr"]
-                - data["R"] * data["omega_r"] ** 3
-            )
-            - 3
-            * data["omega_r"]
-            * (data["R_rt"] * data["omega_r"] + data["R_t"] * data["omega_rr"])
-            + data["R_rrrt"],
-            3 * data["omega_rrt"] * data["R_r"]
-            + 3 * data["omega_rt"] * data["R_rr"]
-            + data["R"]
-            * (
-                data["omega_rrrt"]
-                - 3
-                * data["omega_r"]
-                * (
-                    data["omega_rt"] * data["omega_r"]
-                    + data["omega_t"] * data["omega_rr"]
-                )
-            )
-            + data["omega_t"] * (data["R_rrr"] - 3 * data["R_r"] * data["omega_r"] ** 2)
-            + 3 * data["R_rrt"] * data["omega_r"]
-            + 3 * data["R_rt"] * data["omega_rr"]
-            + data["R_t"] * (data["omega_rrr"] - data["omega_r"] ** 3),
-            data["Z_rrrt"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_theta_rrt",
-    label="\\partial_{\\rho \\rho \\theta} \\mathbf{e}_{\\theta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Poloidal basis vector, third derivative wrt radial coordinate"
-        " twice and poloidal once"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rr",
-        "R_rt",
-        "R_rrt",
-        "R_rtt",
-        "R_rrtt",
-        "R_t",
-        "R_tt",
-        "Z_rrtt",
-        "omega_r",
-        "omega_rr",
-        "omega_rt",
-        "omega_rrt",
-        "omega_rtt",
-        "omega_rrtt",
-        "omega_t",
-        "omega_tt",
-    ],
-)
-def _e_sub_theta_rrt(params, transforms, profiles, data, **kwargs):
-    data["e_theta_rrt"] = jnp.array(
-        [
-            -2 * data["omega_t"] * data["omega_rt"] * data["R_r"]
-            - data["omega_t"] ** 2 * data["R_rr"]
-            - data["R_r"] * data["omega_tt"] * data["omega_r"]
-            - data["R"]
-            * (
-                data["omega_rtt"] * data["omega_r"]
-                + data["omega_tt"] * data["omega_rr"]
-            )
-            - 2
-            * data["omega_rt"]
-            * (data["R_t"] * data["omega_r"] + data["R"] * data["omega_rt"])
-            - 2
-            * data["omega_t"]
-            * (
-                data["R_rt"] * data["omega_r"]
-                + data["R_r"] * data["omega_rt"]
-                + data["R_t"] * data["omega_rr"]
-                + data["R"] * data["omega_rrt"]
-            )
-            + data["R_rrtt"]
-            - data["omega_r"]
-            * (
-                data["omega_tt"] * data["R_r"]
-                + data["R_tt"] * data["omega_r"]
-                + 2 * data["omega_t"] * data["R_rt"]
-                + 2 * data["R_t"] * data["omega_rt"]
-                + data["R"]
-                * (-data["omega_t"] ** 2 * data["omega_r"] + data["omega_rtt"])
-            ),
-            data["omega_rtt"] * data["R_r"]
-            + data["omega_tt"] * data["R_rr"]
-            + data["R_rtt"] * data["omega_r"]
-            + data["R_tt"] * data["omega_rr"]
-            + 2 * data["omega_rt"] * data["R_rt"]
-            + 2 * data["omega_t"] * data["R_rrt"]
-            + 2 * data["R_rt"] * data["omega_rt"]
-            + 2 * data["R_t"] * data["omega_rrt"]
-            + data["R_r"]
-            * (-data["omega_t"] ** 2 * data["omega_r"] + data["omega_rtt"])
-            + data["R"]
-            * (
-                -2 * data["omega_t"] * data["omega_rt"] * data["omega_r"]
-                - data["omega_t"] ** 2 * data["omega_rr"]
-                + data["omega_rrtt"]
-            )
-            + data["omega_r"]
-            * (
-                -data["omega_t"] ** 2 * data["R_r"]
-                - data["R"] * data["omega_tt"] * data["omega_r"]
-                - 2
-                * data["omega_t"]
-                * (data["R_t"] * data["omega_r"] + data["R"] * data["omega_rt"])
-                + data["R_rtt"]
-            ),
-            data["Z_rrtt"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_theta_rrz",
-    label="\\partial_{\\rho \\rho \\zeta} \\mathbf{e}_{\\theta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Poloidal basis vector, third derivative wrt radial coordinate"
-        " twice and toroidal once"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rr",
-        "R_rt",
-        "R_rrt",
-        "R_rtz",
-        "R_rrtz",
-        "R_rz",
-        "R_rrz",
-        "R_t",
-        "R_tz",
-        "R_z",
-        "Z_rrtz",
-        "omega_r",
-        "omega_rr",
-        "omega_rt",
-        "omega_rrt",
-        "omega_rtz",
-        "omega_rrtz",
-        "omega_rz",
-        "omega_rrz",
-        "omega_t",
-        "omega_tz",
-        "omega_z",
-    ],
-)
-def _e_sub_theta_rrz(params, transforms, profiles, data, **kwargs):
-    data["e_theta_rrz"] = jnp.array(
-        [
-            -data["omega_rz"] * data["R_t"] * data["omega_r"]
-            - (1 + data["omega_z"])
-            * (data["R_rt"] * data["omega_r"] + data["R_t"] * data["omega_rr"])
-            - data["R_r"] * data["omega_tz"] * data["omega_r"]
-            - data["R"]
-            * (
-                data["omega_rtz"] * data["omega_r"]
-                + data["omega_tz"] * data["omega_rr"]
-            )
-            - data["omega_rt"]
-            * (
-                (1 + data["omega_z"]) * data["R_r"]
-                + data["R_z"] * data["omega_r"]
-                + data["R"] * data["omega_rz"]
-            )
-            - data["omega_t"]
-            * (
-                data["omega_rz"] * data["R_r"]
-                + (1 + data["omega_z"]) * data["R_rr"]
-                + data["R_rz"] * data["omega_r"]
-                + data["R_z"] * data["omega_rr"]
-                + data["R_r"] * data["omega_rz"]
-                + data["R"] * data["omega_rrz"]
-            )
-            - data["R_r"] * (1 + data["omega_z"]) * data["omega_rt"]
-            - data["R"]
-            * (
-                data["omega_rz"] * data["omega_rt"]
-                + (1 + data["omega_z"]) * data["omega_rrt"]
-            )
-            + data["R_rrtz"]
-            - data["omega_r"]
-            * (
-                data["omega_tz"] * data["R_r"]
-                + data["R_tz"] * data["omega_r"]
-                + data["omega_t"] * data["R_rz"]
-                + data["R_t"] * data["omega_rz"]
-                + data["R_rt"]
-                + data["omega_z"] * data["R_rt"]
-                + data["R_z"] * data["omega_rt"]
-                + data["R"]
-                * (
-                    -(1 + data["omega_z"]) * data["omega_t"] * data["omega_r"]
-                    + data["omega_rtz"]
-                )
-            ),
-            data["omega_rtz"] * data["R_r"]
-            + data["omega_tz"] * data["R_rr"]
-            + data["R_rtz"] * data["omega_r"]
-            + data["R_tz"] * data["omega_rr"]
-            + data["omega_rt"] * data["R_rz"]
-            + data["omega_t"] * data["R_rrz"]
-            + data["R_rt"] * data["omega_rz"]
-            + data["R_t"] * data["omega_rrz"]
-            + data["R_rrt"]
-            + data["omega_rz"] * data["R_rt"]
-            + data["omega_z"] * data["R_rrt"]
-            + data["R_rz"] * data["omega_rt"]
-            + data["R_z"] * data["omega_rrt"]
-            + data["R_r"]
-            * (
-                -(1 + data["omega_z"]) * data["omega_t"] * data["omega_r"]
-                + data["omega_rtz"]
-            )
-            + data["R"]
-            * (
-                -data["omega_rz"] * data["omega_t"] * data["omega_r"]
-                - (1 + data["omega_z"])
-                * (
-                    data["omega_rt"] * data["omega_r"]
-                    + data["omega_t"] * data["omega_rr"]
-                )
-                + data["omega_rrtz"]
-            )
-            + data["omega_r"]
-            * (
-                -(1 + data["omega_z"]) * data["R_t"] * data["omega_r"]
-                - data["R"] * data["omega_tz"] * data["omega_r"]
-                - data["omega_t"]
-                * (
-                    (1 + data["omega_z"]) * data["R_r"]
-                    + data["R_z"] * data["omega_r"]
-                    + data["R"] * data["omega_rz"]
-                )
-                - data["R"] * (1 + data["omega_z"]) * data["omega_rt"]
-                + data["R_rtz"]
-            ),
-            data["Z_rrtz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_theta_rt",
-    label="\\partial_{\\rho \\theta} \\mathbf{e}_{\\theta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Poloidal basis vector, second derivative wrt radial and poloidal"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rt",
-        "R_rtt",
-        "R_t",
-        "R_tt",
-        "Z_rtt",
-        "omega_r",
-        "omega_rt",
-        "omega_rtt",
-        "omega_t",
-        "omega_tt",
-    ],
-)
-def _e_sub_theta_rt(params, transforms, profiles, data, **kwargs):
-    data["e_theta_rt"] = jnp.array(
-        [
-            -data["omega_t"] ** 2 * data["R_r"]
-            - data["R"] * data["omega_tt"] * data["omega_r"]
-            - 2
-            * data["omega_t"]
-            * (data["R_t"] * data["omega_r"] + data["R"] * data["omega_rt"])
-            + data["R_rtt"],
-            data["omega_tt"] * data["R_r"]
-            + data["R_tt"] * data["omega_r"]
-            + 2 * data["omega_t"] * data["R_rt"]
-            + 2 * data["R_t"] * data["omega_rt"]
-            + data["R"] * (-data["omega_t"] ** 2 * data["omega_r"] + data["omega_rtt"]),
-            data["Z_rtt"],
-        ]
-    ).T
     return data
 
 
@@ -2846,6 +2490,11 @@ def _e_sub_theta_rt(params, transforms, profiles, data, **kwargs):
         "omega_ttt",
         "omega_rttt",
     ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
+    aliases=["e_rho_ttt"],
 )
 def _e_sub_theta_rtt(params, transforms, profiles, data, **kwargs):
     data["e_theta_rtt"] = jnp.array(
@@ -2887,6 +2536,7 @@ def _e_sub_theta_rtt(params, transforms, profiles, data, **kwargs):
             data["Z_rttt"],
         ]
     ).T
+
     return data
 
 
@@ -2930,6 +2580,7 @@ def _e_sub_theta_rtt(params, transforms, profiles, data, **kwargs):
         "omega_z",
         "omega_rz",
     ],
+    aliases=["e_rho_ttz", "e_zeta_rtt"],
 )
 def _e_sub_theta_rtz(params, transforms, profiles, data, **kwargs):
     data["e_theta_rtz"] = jnp.array(
@@ -2990,70 +2641,7 @@ def _e_sub_theta_rtz(params, transforms, profiles, data, **kwargs):
             data["Z_rttz"],
         ]
     ).T
-    return data
 
-
-@register_compute_fun(
-    name="e_theta_rz",
-    label="\\partial_{\\rho \\zeta} \\mathbf{e}_{\\theta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Poloidal basis vector, second derivative wrt radial and toroidal"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rt",
-        "R_rtz",
-        "R_rz",
-        "R_t",
-        "R_tz",
-        "R_z",
-        "Z_rtz",
-        "omega_r",
-        "omega_rt",
-        "omega_rtz",
-        "omega_rz",
-        "omega_t",
-        "omega_tz",
-        "omega_z",
-    ],
-)
-def _e_sub_theta_rz(params, transforms, profiles, data, **kwargs):
-    data["e_theta_rz"] = jnp.array(
-        [
-            -(1 + data["omega_z"]) * data["R_t"] * data["omega_r"]
-            - data["R"] * data["omega_tz"] * data["omega_r"]
-            - data["omega_t"]
-            * (
-                (1 + data["omega_z"]) * data["R_r"]
-                + data["R_z"] * data["omega_r"]
-                + data["R"] * data["omega_rz"]
-            )
-            - data["R"] * (1 + data["omega_z"]) * data["omega_rt"]
-            + data["R_rtz"],
-            data["omega_tz"] * data["R_r"]
-            + data["R_tz"] * data["omega_r"]
-            + data["omega_t"] * data["R_rz"]
-            + data["R_t"] * data["omega_rz"]
-            + data["R_rt"]
-            + data["omega_z"] * data["R_rt"]
-            + data["R_z"] * data["omega_rt"]
-            + data["R"]
-            * (
-                -(1 + data["omega_z"]) * data["omega_t"] * data["omega_r"]
-                + data["omega_rtz"]
-            ),
-            data["Z_rtz"],
-        ]
-    ).T
     return data
 
 
@@ -3097,6 +2685,7 @@ def _e_sub_theta_rz(params, transforms, profiles, data, **kwargs):
         "omega_rz",
         "omega_rzz",
     ],
+    aliases=["e_rho_tzz", "e_zeta_rtz"],
 )
 def _e_sub_theta_rzz(params, transforms, profiles, data, **kwargs):
     data["e_theta_rzz"] = jnp.array(
@@ -3160,6 +2749,7 @@ def _e_sub_theta_rzz(params, transforms, profiles, data, **kwargs):
             data["Z_rtzz"],
         ]
     ).T
+
     return data
 
 
@@ -3175,6 +2765,10 @@ def _e_sub_theta_rzz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_t", "R_tt", "Z_tt", "omega_t", "omega_tt"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.core.Surface",
+    ],
 )
 def _e_sub_theta_t(params, transforms, profiles, data, **kwargs):
     data["e_theta_t"] = jnp.array(
@@ -3201,7 +2795,20 @@ def _e_sub_theta_t(params, transforms, profiles, data, **kwargs):
     transforms={},
     profiles=[],
     coordinates="rtz",
-    data=["R", "R_t", "R_tt", "R_ttt", "Z_ttt", "omega_t", "omega_tt", "omega_ttt"],
+    data=[
+        "R",
+        "R_t",
+        "R_tt",
+        "R_ttt",
+        "Z_ttt",
+        "omega_t",
+        "omega_tt",
+        "omega_ttt",
+    ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.core.Surface",
+    ],
 )
 def _e_sub_theta_tt(params, transforms, profiles, data, **kwargs):
     data["e_theta_tt"] = jnp.array(
@@ -3214,6 +2821,7 @@ def _e_sub_theta_tt(params, transforms, profiles, data, **kwargs):
             data["Z_ttt"],
         ]
     ).T
+
     return data
 
 
@@ -3245,6 +2853,11 @@ def _e_sub_theta_tt(params, transforms, profiles, data, **kwargs):
         "omega_tz",
         "omega_z",
     ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
+    aliases=["e_zeta_tt"],
 )
 def _e_sub_theta_tz(params, transforms, profiles, data, **kwargs):
     data["e_theta_tz"] = jnp.array(
@@ -3263,6 +2876,7 @@ def _e_sub_theta_tz(params, transforms, profiles, data, **kwargs):
             data["Z_ttz"],
         ]
     ).T
+
     return data
 
 
@@ -3278,6 +2892,11 @@ def _e_sub_theta_tz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_t", "R_tz", "R_z", "Z_tz", "omega_t", "omega_tz", "omega_z"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
+    aliases=["e_zeta_t"],
 )
 def _e_sub_theta_z(params, transforms, profiles, data, **kwargs):
     data["e_theta_z"] = jnp.array(
@@ -3289,6 +2908,7 @@ def _e_sub_theta_z(params, transforms, profiles, data, **kwargs):
             data["Z_tz"],
         ]
     ).T
+
     return data
 
 
@@ -3320,6 +2940,11 @@ def _e_sub_theta_z(params, transforms, profiles, data, **kwargs):
         "omega_z",
         "omega_zz",
     ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
+    aliases=["e_zeta_tz"],
 )
 def _e_sub_theta_zz(params, transforms, profiles, data, **kwargs):
     data["e_theta_zz"] = jnp.array(
@@ -3338,6 +2963,7 @@ def _e_sub_theta_zz(params, transforms, profiles, data, **kwargs):
             data["Z_tzz"],
         ]
     ).T
+
     return data
 
 
@@ -3353,724 +2979,16 @@ def _e_sub_theta_zz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_z", "Z_z", "omega_z"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
 )
 def _e_sub_zeta(params, transforms, profiles, data, **kwargs):
     data["e_zeta"] = jnp.array(
         [data["R_z"], data["R"] * (1 + data["omega_z"]), data["Z_z"]]
     ).T
-    return data
 
-
-@register_compute_fun(
-    name="e_zeta_r",
-    label="\\partial_{\\rho} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description="Covariant Toroidal basis vector, derivative wrt radial coordinate",
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=["R", "R_r", "R_rz", "R_z", "Z_rz", "omega_r", "omega_rz", "omega_z"],
-)
-def _e_sub_zeta_r(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_r"] = jnp.array(
-        [
-            -data["R"] * (1 + data["omega_z"]) * data["omega_r"] + data["R_rz"],
-            (1 + data["omega_z"]) * data["R_r"]
-            + data["R_z"] * data["omega_r"]
-            + data["R"] * data["omega_rz"],
-            data["Z_rz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rr",
-    label="\\partial_{\\rho \\rho} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, second derivative wrt radial and radial"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rr",
-        "R_rrz",
-        "R_rz",
-        "R_z",
-        "Z_rrz",
-        "omega_r",
-        "omega_rr",
-        "omega_rrz",
-        "omega_rz",
-        "omega_z",
-    ],
-)
-def _e_sub_zeta_rr(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rr"] = jnp.array(
-        [
-            -2 * (1 + data["omega_z"]) * data["R_r"] * data["omega_r"]
-            - data["R_z"] * data["omega_r"] ** 2
-            - 2 * data["R"] * data["omega_r"] * data["omega_rz"]
-            - data["R"] * data["omega_rr"] * (1 + data["omega_z"])
-            + data["R_rrz"],
-            2 * data["omega_r"] * data["R_rz"]
-            + 2 * data["R_r"] * data["omega_rz"]
-            + data["R_rr"] * (1 + data["omega_z"])
-            + data["R_z"] * data["omega_rr"]
-            - data["R"]
-            * ((1 + data["omega_z"]) * data["omega_r"] ** 2 - data["omega_rrz"]),
-            data["Z_rrz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rrr",
-    label="\\partial_{\\rho \\rho \\rho} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, third derivative wrt radial coordinate"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_z",
-        "R_rr",
-        "R_rz",
-        "R_rrr",
-        "R_rrz",
-        "R_rrrz",
-        "Z_rrrz",
-        "omega_r",
-        "omega_z",
-        "omega_rr",
-        "omega_rz",
-        "omega_rrr",
-        "omega_rrz",
-        "omega_rrrz",
-    ],
-)
-def _e_sub_zeta_rrr(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rrr"] = jnp.array(
-        [
-            -3 * data["R"] * data["omega_rrz"] * data["omega_r"]
-            - 3
-            * data["omega_rz"]
-            * (2 * data["R_r"] * data["omega_r"] + data["R"] * data["omega_rr"])
-            - 3
-            * data["omega_z"]
-            * (data["R_rr"] * data["omega_r"] + data["R_r"] * data["omega_rr"])
-            - (1 + data["omega_z"])
-            * data["R"]
-            * (data["omega_rrr"] - data["omega_r"] ** 3)
-            - 3
-            * data["omega_r"]
-            * (
-                data["R_rz"] * data["omega_r"]
-                + data["R_z"] * data["omega_rr"]
-                + data["R_rr"]
-            )
-            - 3 * data["R_r"] * data["omega_rr"]
-            + data["R_rrrz"],
-            3
-            * data["R_r"]
-            * (data["omega_rrz"] - (1 + data["omega_z"]) * data["omega_r"] ** 2)
-            + 3 * data["omega_rz"] * data["R_rr"]
-            + data["R"]
-            * (
-                data["omega_rrrz"]
-                - 3
-                * data["omega_r"]
-                * (
-                    data["omega_rz"] * data["omega_r"]
-                    + (1 + data["omega_z"]) * data["omega_rr"]
-                )
-            )
-            + (1 + data["omega_z"]) * data["R_rrr"]
-            + 3 * data["R_rrz"] * data["omega_r"]
-            + 3 * data["R_rz"] * data["omega_rr"]
-            + data["R_z"] * (data["omega_rrr"] - data["omega_r"] ** 3),
-            data["Z_rrrz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rrt",
-    label="\\partial_{\\rho \\theta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, third derivative wrt radial coordinate"
-        " twice and poloidal once"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rr",
-        "R_rt",
-        "R_rrt",
-        "R_rtz",
-        "R_rrtz",
-        "R_rz",
-        "R_rrz",
-        "R_t",
-        "R_tz",
-        "R_z",
-        "Z_rrtz",
-        "omega_r",
-        "omega_rr",
-        "omega_rt",
-        "omega_rrt",
-        "omega_rtz",
-        "omega_rrtz",
-        "omega_rz",
-        "omega_rrz",
-        "omega_t",
-        "omega_tz",
-        "omega_z",
-    ],
-)
-def _e_sub_zeta_rrt(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rrt"] = jnp.array(
-        [
-            -(data["omega_rz"] * data["R_t"] * data["omega_r"])
-            - (1 + data["omega_z"])
-            * (data["R_rt"] * data["omega_r"] + data["R_t"] * data["omega_rr"])
-            - data["R_r"] * data["omega_tz"] * data["omega_r"]
-            - data["R"]
-            * (
-                data["omega_rtz"] * data["omega_r"]
-                + data["omega_tz"] * data["omega_rr"]
-            )
-            - data["omega_rt"]
-            * (
-                (1 + data["omega_z"]) * data["R_r"]
-                + data["R_z"] * data["omega_r"]
-                + data["R"] * data["omega_rz"]
-            )
-            - data["omega_t"]
-            * (
-                data["omega_rz"] * data["R_r"]
-                + (1 + data["omega_z"]) * data["R_rr"]
-                + data["R_rz"] * data["omega_r"]
-                + data["R_z"] * data["omega_rr"]
-                + data["R_r"] * data["omega_rz"]
-                + data["R"] * data["omega_rrz"]
-            )
-            - data["R_r"] * (1 + data["omega_z"]) * data["omega_rt"]
-            - data["R"]
-            * (
-                data["omega_rz"] * data["omega_rt"]
-                + (1 + data["omega_z"]) * data["omega_rrt"]
-            )
-            + data["R_rrtz"]
-            - data["omega_r"]
-            * (
-                data["omega_tz"] * data["R_r"]
-                + data["R_tz"] * data["omega_r"]
-                + data["omega_t"] * data["R_rz"]
-                + data["R_t"] * data["omega_rz"]
-                + data["R_rt"]
-                + data["omega_z"] * data["R_rt"]
-                + data["R_z"] * data["omega_rt"]
-                + data["R"]
-                * (
-                    -(1 + data["omega_z"]) * data["omega_t"] * data["omega_r"]
-                    + data["omega_rtz"]
-                )
-            ),
-            data["omega_rtz"] * data["R_r"]
-            + data["omega_tz"] * data["R_rr"]
-            + data["R_rtz"] * data["omega_r"]
-            + data["R_tz"] * data["omega_rr"]
-            + data["omega_rt"] * data["R_rz"]
-            + data["omega_t"] * data["R_rrz"]
-            + data["R_rt"] * data["omega_rz"]
-            + data["R_t"] * data["omega_rrz"]
-            + data["R_rrt"]
-            + data["omega_rz"] * data["R_rt"]
-            + data["omega_z"] * data["R_rrt"]
-            + data["R_rz"] * data["omega_rt"]
-            + data["R_z"] * data["omega_rrt"]
-            + data["R_r"]
-            * (
-                -(1 + data["omega_z"]) * data["omega_t"] * data["omega_r"]
-                + data["omega_rtz"]
-            )
-            + data["R"]
-            * (
-                -data["omega_rz"] * data["omega_t"] * data["omega_r"]
-                - (1 + data["omega_z"])
-                * (
-                    data["omega_rt"] * data["omega_r"]
-                    + data["omega_t"] * data["omega_rr"]
-                )
-                + data["omega_rrtz"]
-            )
-            + data["omega_r"]
-            * (
-                -(1 + data["omega_z"]) * data["R_t"] * data["omega_r"]
-                - data["R"] * data["omega_tz"] * data["omega_r"]
-                - data["omega_t"]
-                * (
-                    (1 + data["omega_z"]) * data["R_r"]
-                    + data["R_z"] * data["omega_r"]
-                    + data["R"] * data["omega_rz"]
-                )
-                - data["R"] * (1 + data["omega_z"]) * data["omega_rt"]
-                + data["R_rtz"]
-            ),
-            data["Z_rrtz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rrz",
-    label="\\partial_{\\rho \\rho \\zeta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, third derivative wrt radial coordinate"
-        " twice and toroidal once"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rr",
-        "R_rz",
-        "R_rrz",
-        "R_rzz",
-        "R_rrzz",
-        "R_z",
-        "R_zz",
-        "Z_rrzz",
-        "omega_r",
-        "omega_rr",
-        "omega_rz",
-        "omega_rrz",
-        "omega_rzz",
-        "omega_rrzz",
-        "omega_z",
-        "omega_zz",
-    ],
-)
-def _e_sub_zeta_rrz(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rrz"] = jnp.array(
-        [
-            -2 * ((1 + data["omega_z"]) * data["omega_rz"]) * data["R_r"]
-            - ((1 + data["omega_z"]) ** 2) * data["R_rr"]
-            - 2 * data["R_rz"] * (1 + data["omega_z"]) * data["omega_r"]
-            - 2
-            * data["R_z"]
-            * (
-                data["omega_rz"] * data["omega_r"]
-                + (1 + data["omega_z"]) * data["omega_rr"]
-            )
-            - data["R_r"] * data["omega_zz"] * data["omega_r"]
-            - data["R"]
-            * (
-                data["omega_rzz"]
-                * data["omega_r"]
-                * data["omega_zz"]
-                * data["omega_rr"]
-            )
-            - 2 * data["R_r"] * (1 + data["omega_z"]) * data["omega_rz"]
-            - 2
-            * data["R"]
-            * (data["omega_rz"] ** 2 + (1 + data["omega_z"]) * data["omega_rrz"])
-            + data["R_rrzz"]
-            - data["omega_r"]
-            * (
-                data["omega_zz"] * data["R_r"]
-                + data["R_zz"] * data["omega_r"]
-                + 2 * (1 + data["omega_z"]) * data["R_rz"]
-                + 2 * data["R_z"] * data["omega_rz"]
-                - data["R"]
-                * ((1 + data["omega_z"]) ** 2 * data["omega_r"] - data["omega_rzz"])
-            ),
-            data["omega_rzz"] * data["R_r"]
-            + data["omega_zz"] * data["R_rr"]
-            + data["R_rzz"] * data["omega_r"]
-            + data["R_zz"] * data["omega_rr"]
-            + 2 * data["omega_rz"] * data["R_rz"]
-            + 2 * (1 + data["omega_z"]) * data["R_rrz"]
-            + 2 * data["R_rz"] * data["omega_rz"]
-            + 2 * data["R_z"] * data["omega_rrz"]
-            - data["R_r"]
-            * ((1 + data["omega_z"]) ** 2 * data["omega_r"] - data["omega_rzz"])
-            - data["R"]
-            * (
-                2 * (1 + data["omega_z"]) * data["omega_rz"] * data["omega_r"]
-                + (1 + data["omega_z"]) ** 2 * data["omega_rr"]
-                - data["omega_rrzz"]
-            )
-            + data["omega_r"]
-            * (
-                -((1 + data["omega_z"]) ** 2) * data["R_r"]
-                - 2 * data["R_z"] * (1 + data["omega_z"]) * data["omega_r"]
-                - data["R"] * data["omega_zz"] * data["omega_r"]
-                - 2 * data["R"] * (1 + data["omega_z"]) * data["omega_rz"]
-                + data["R_rzz"]
-            ),
-            data["Z_rrzz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rt",
-    label="\\partial_{\\rho \\theta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, second derivative wrt radial and poloidal"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rt",
-        "R_rtz",
-        "R_rz",
-        "R_t",
-        "R_tz",
-        "R_z",
-        "Z_rtz",
-        "omega_r",
-        "omega_rt",
-        "omega_rtz",
-        "omega_rz",
-        "omega_t",
-        "omega_tz",
-        "omega_z",
-    ],
-)
-def _e_sub_zeta_rt(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rt"] = jnp.array(
-        [
-            -(1 + data["omega_z"]) * data["R_t"] * data["omega_r"]
-            - data["R"] * data["omega_tz"] * data["omega_r"]
-            - data["omega_t"]
-            * (
-                (1 + data["omega_z"]) * data["R_r"]
-                + data["R_z"] * data["omega_r"]
-                + data["R"] * data["omega_rz"]
-            )
-            - data["R"] * (1 + data["omega_z"]) * data["omega_rt"]
-            + data["R_rtz"],
-            data["omega_tz"] * data["R_r"]
-            + data["R_tz"] * data["omega_r"]
-            + data["omega_t"] * data["R_rz"]
-            + data["R_t"] * data["omega_rz"]
-            + data["R_rt"]
-            + data["omega_z"] * data["R_rt"]
-            + data["R_z"] * data["omega_rt"]
-            + data["R"]
-            * (
-                -(1 + data["omega_z"]) * data["omega_t"] * data["omega_r"]
-                + data["omega_rtz"]
-            ),
-            data["Z_rtz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rtt",
-    label="\\partial_{\\rho \\theta \\theta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, third derivative wrt radial coordinate"
-        " once and poloidal twice"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_t",
-        "R_rt",
-        "R_tt",
-        "R_rtt",
-        "R_ttz",
-        "R_rttz",
-        "R_tz",
-        "R_rtz",
-        "R_z",
-        "R_rz",
-        "Z_rttz",
-        "omega_r",
-        "omega_t",
-        "omega_rt",
-        "omega_tt",
-        "omega_rtt",
-        "omega_ttz",
-        "omega_rttz",
-        "omega_tz",
-        "omega_rtz",
-        "omega_z",
-        "omega_rz",
-    ],
-)
-def _e_sub_zeta_rtt(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rtt"] = jnp.array(
-        [
-            -2 * data["omega_rz"] * data["R_t"] * data["omega_t"]
-            - 2
-            * (1 + data["omega_z"])
-            * (data["R_rt"] * data["omega_t"] + data["R_t"] * data["omega_rt"])
-            - data["R_rz"] * data["omega_t"] ** 2
-            - data["R_z"] * 2 * data["omega_t"] * data["omega_rt"]
-            - 2 * data["R_r"] * data["omega_t"] * data["omega_tz"]
-            - 2
-            * data["R"]
-            * (
-                data["omega_rt"] * data["omega_tz"]
-                + data["omega_t"] * data["omega_rtz"]
-            )
-            - data["R_r"] * (1 + data["omega_z"]) * data["omega_tt"]
-            - data["R"]
-            * (
-                data["omega_rz"] * data["omega_tt"]
-                + (1 + data["omega_z"]) * data["omega_rtt"]
-            )
-            + data["R_rttz"]
-            - data["omega_r"]
-            * (
-                2 * data["omega_t"] * data["R_tz"]
-                + 2 * data["R_t"] * data["omega_tz"]
-                + (1 + data["omega_z"]) * data["R_tt"]
-                + data["R_z"] * data["omega_tt"]
-                - data["R"]
-                * ((1 + data["omega_z"]) * data["omega_t"] ** 2 - data["omega_ttz"])
-            ),
-            2 * data["omega_rt"] * data["R_tz"]
-            + 2 * data["omega_t"] * data["R_rtz"]
-            + 2 * data["R_rt"] * data["omega_tz"]
-            + 2 * data["R_t"] * data["omega_rtz"]
-            + data["omega_rz"] * data["R_tt"]
-            + (1 + data["omega_z"]) * data["R_rtt"]
-            + data["R_rz"] * data["omega_tt"]
-            + data["R_z"] * data["omega_rtt"]
-            - data["R_r"]
-            * ((1 + data["omega_z"]) * data["omega_t"] ** 2 - data["omega_ttz"])
-            - data["R"]
-            * (
-                data["omega_rz"] * data["omega_t"] ** 2
-                + (1 + data["omega_z"]) * 2 * data["omega_t"] * data["omega_rt"]
-                - data["omega_rttz"]
-            )
-            + data["omega_r"]
-            * (
-                -2 * (1 + data["omega_z"]) * data["R_t"] * data["omega_t"]
-                - data["R_z"] * data["omega_t"] ** 2
-                - 2 * data["R"] * data["omega_t"] * data["omega_tz"]
-                - data["R"] * (1 + data["omega_z"]) * data["omega_tt"]
-                + data["R_ttz"]
-            ),
-            data["Z_rttz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rtz",
-    label="\\partial_{\\rho \\theta \\zeta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, third derivative wrt radial, poloidal,"
-        " and toroidal coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_t",
-        "R_rt",
-        "R_tz",
-        "R_rtz",
-        "R_tzz",
-        "R_rtzz",
-        "R_z",
-        "R_rz",
-        "R_zz",
-        "R_rzz",
-        "Z_rtzz",
-        "omega_r",
-        "omega_t",
-        "omega_rt",
-        "omega_tz",
-        "omega_rtz",
-        "omega_tzz",
-        "omega_rtzz",
-        "omega_z",
-        "omega_rz",
-        "omega_zz",
-        "omega_rzz",
-    ],
-)
-def _e_sub_zeta_rtz(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rtz"] = jnp.array(
-        [
-            -2 * (1 + data["omega_z"]) * data["omega_rz"] * data["R_t"]
-            - (1 + data["omega_z"]) ** 2 * data["R_rt"]
-            - 2 * data["R_rz"] * (1 + data["omega_z"]) * data["omega_t"]
-            - 2
-            * data["R_z"]
-            * (
-                data["omega_rz"] * data["omega_t"]
-                + (1 + data["omega_z"]) * data["omega_rt"]
-            )
-            - data["R_r"] * data["omega_zz"] * data["omega_t"]
-            - data["R"]
-            * (
-                data["omega_rzz"]
-                * data["omega_t"]
-                * data["omega_zz"]
-                * data["omega_rt"]
-            )
-            - 2 * data["R_r"] * (1 + data["omega_z"]) * data["omega_tz"]
-            - 2
-            * data["R"]
-            * (
-                data["omega_rz"] * data["omega_tz"]
-                + (1 + data["omega_z"]) * data["omega_rtz"]
-            )
-            + data["R_rtzz"]
-            - data["omega_r"]
-            * (
-                data["omega_zz"] * data["R_t"]
-                + data["R_zz"] * data["omega_t"]
-                + 2 * (1 + data["omega_z"]) * data["R_tz"]
-                + 2 * data["R_z"] * data["omega_tz"]
-                - data["R"]
-                * ((1 + data["omega_z"]) ** 2 * data["omega_t"] - data["omega_tzz"])
-            ),
-            data["omega_rzz"] * data["R_t"]
-            + data["omega_zz"] * data["R_rt"]
-            + data["R_rzz"] * data["omega_t"]
-            + data["R_zz"] * data["omega_rt"]
-            + 2 * data["omega_rz"] * data["R_tz"]
-            + 2 * (1 + data["omega_z"]) * data["R_rtz"]
-            + 2 * data["R_rz"] * data["omega_tz"]
-            + 2 * data["R_z"] * data["omega_rtz"]
-            - data["R_r"]
-            * ((1 + data["omega_z"]) ** 2 * data["omega_t"] - data["omega_tzz"])
-            - data["R"]
-            * (
-                2 * (1 + data["omega_z"]) * data["omega_rz"] * data["omega_t"]
-                + (1 + data["omega_z"]) ** 2 * data["omega_rt"]
-                - data["omega_rtzz"]
-            )
-            + data["omega_r"]
-            * (
-                -((1 + data["omega_z"]) ** 2) * data["R_t"]
-                - 2 * data["R_z"] * (1 + data["omega_z"]) * data["omega_t"]
-                - data["R"] * data["omega_zz"] * data["omega_t"]
-                - 2 * data["R"] * (1 + data["omega_z"]) * data["omega_tz"]
-                + data["R_tzz"]
-            ),
-            data["Z_rtzz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_rz",
-    label="\\partial_{\\rho \\zeta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, second derivative wrt radial and toroidal"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_r",
-        "R_rz",
-        "R_rzz",
-        "R_z",
-        "R_zz",
-        "Z_rzz",
-        "omega_r",
-        "omega_rz",
-        "omega_rzz",
-        "omega_z",
-        "omega_zz",
-    ],
-)
-def _e_sub_zeta_rz(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_rz"] = jnp.array(
-        [
-            -((1 + data["omega_z"]) ** 2) * data["R_r"]
-            - 2 * data["R_z"] * (1 + data["omega_z"]) * data["omega_r"]
-            - data["R"] * data["omega_zz"] * data["omega_r"]
-            - 2 * data["R"] * (1 + data["omega_z"]) * data["omega_rz"]
-            + data["R_rzz"],
-            data["omega_zz"] * data["R_r"]
-            + data["R_zz"] * data["omega_r"]
-            + 2 * (1 + data["omega_z"]) * data["R_rz"]
-            + 2 * data["R_z"] * data["omega_rz"]
-            - data["R"]
-            * ((1 + data["omega_z"]) ** 2 * data["omega_r"] - data["omega_rzz"]),
-            data["Z_rzz"],
-        ]
-    ).T
     return data
 
 
@@ -4159,130 +3077,7 @@ def _e_sub_zeta_rzz(params, transforms, profiles, data, **kwargs):
             data["Z_rzzz"],
         ]
     ).T
-    return data
 
-
-@register_compute_fun(
-    name="e_zeta_t",
-    label="\\partial_{\\theta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description="Covariant Toroidal basis vector, derivative wrt poloidal coordinate",
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=["R", "R_t", "R_tz", "R_z", "Z_tz", "omega_t", "omega_tz", "omega_z"],
-)
-def _e_sub_zeta_t(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_t"] = jnp.array(
-        [
-            -data["R"] * (1 + data["omega_z"]) * data["omega_t"] + data["R_tz"],
-            (1 + data["omega_z"]) * data["R_t"]
-            + data["R_z"] * data["omega_t"]
-            + data["R"] * data["omega_tz"],
-            data["Z_tz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_tt",
-    label="\\partial_{\\theta \\theta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, second derivative wrt poloidal and poloidal"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_t",
-        "R_tt",
-        "R_ttz",
-        "R_tz",
-        "R_z",
-        "Z_ttz",
-        "omega_t",
-        "omega_tt",
-        "omega_ttz",
-        "omega_tz",
-        "omega_z",
-    ],
-)
-def _e_sub_zeta_tt(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_tt"] = jnp.array(
-        [
-            -2 * (1 + data["omega_z"]) * data["R_t"] * data["omega_t"]
-            - data["R_z"] * data["omega_t"] ** 2
-            - 2 * data["R"] * data["omega_t"] * data["omega_tz"]
-            - data["R"] * (1 + data["omega_z"]) * data["omega_tt"]
-            + data["R_ttz"],
-            2 * data["omega_t"] * data["R_tz"]
-            + 2 * data["R_t"] * data["omega_tz"]
-            + (1 + data["omega_z"]) * data["R_tt"]
-            + data["R_z"] * data["omega_tt"]
-            - data["R"]
-            * ((1 + data["omega_z"]) * data["omega_t"] ** 2 - data["omega_ttz"]),
-            data["Z_ttz"],
-        ]
-    ).T
-    return data
-
-
-@register_compute_fun(
-    name="e_zeta_tz",
-    label="\\partial_{\\theta \\zeta} \\mathbf{e}_{\\zeta}",
-    units="m",
-    units_long="meters",
-    description=(
-        "Covariant Toroidal basis vector, second derivative wrt poloidal and toroidal"
-        " coordinates"
-    ),
-    dim=3,
-    params=[],
-    transforms={},
-    profiles=[],
-    coordinates="rtz",
-    data=[
-        "R",
-        "R_t",
-        "R_tz",
-        "R_tzz",
-        "R_z",
-        "R_zz",
-        "Z_tzz",
-        "omega_t",
-        "omega_tz",
-        "omega_tzz",
-        "omega_z",
-        "omega_zz",
-    ],
-)
-def _e_sub_zeta_tz(params, transforms, profiles, data, **kwargs):
-    data["e_zeta_tz"] = jnp.array(
-        [
-            -((1 + data["omega_z"]) ** 2) * data["R_t"]
-            - 2 * data["R_z"] * (1 + data["omega_z"]) * data["omega_t"]
-            - data["R"] * data["omega_zz"] * data["omega_t"]
-            - 2 * data["R"] * (1 + data["omega_z"]) * data["omega_tz"]
-            + data["R_tzz"],
-            data["omega_zz"] * data["R_t"]
-            + data["R_zz"] * data["omega_t"]
-            + 2 * (1 + data["omega_z"]) * data["R_tz"]
-            + 2 * data["R_z"] * data["omega_tz"]
-            - data["R"]
-            * ((1 + data["omega_z"]) ** 2 * data["omega_t"] - data["omega_tzz"]),
-            data["Z_tzz"],
-        ]
-    ).T
     return data
 
 
@@ -4298,6 +3093,10 @@ def _e_sub_zeta_tz(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="rtz",
     data=["R", "R_z", "R_zz", "Z_zz", "omega_z", "omega_zz"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
 )
 def _e_sub_zeta_z(params, transforms, profiles, data, **kwargs):
     data["e_zeta_z"] = jnp.array(
@@ -4307,6 +3106,7 @@ def _e_sub_zeta_z(params, transforms, profiles, data, **kwargs):
             data["Z_zz"],
         ]
     ).T
+
     return data
 
 
@@ -4324,7 +3124,20 @@ def _e_sub_zeta_z(params, transforms, profiles, data, **kwargs):
     transforms={},
     profiles=[],
     coordinates="rtz",
-    data=["R", "R_z", "R_zz", "R_zzz", "Z_zzz", "omega_z", "omega_zz", "omega_zzz"],
+    data=[
+        "R",
+        "R_z",
+        "R_zz",
+        "R_zzz",
+        "Z_zzz",
+        "omega_z",
+        "omega_zz",
+        "omega_zzz",
+    ],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
 )
 def _e_sub_zeta_zz(params, transforms, profiles, data, **kwargs):
     data["e_zeta_zz"] = jnp.array(
@@ -4345,6 +3158,7 @@ def _e_sub_zeta_zz(params, transforms, profiles, data, **kwargs):
             data["Z_zzz"],
         ]
     ).T
+
     return data
 
 
@@ -4353,7 +3167,9 @@ def _e_sub_zeta_zz(params, transforms, profiles, data, **kwargs):
     label="\\nabla \\alpha",
     units="m^{-1}",
     units_long="Inverse meters",
-    description="Unit vector along field line",
+    description=(
+        "Gradient of field line label, which is perpendicular to the field line"
+    ),
     dim=3,
     params=[],
     transforms={},
@@ -4513,4 +3329,31 @@ def _n_zeta(params, transforms, profiles, data, **kwargs):
             cross(data["e_rho"], data["e_theta_r"]).T, data["|e_rho x e_theta|_r"]
         ).T,
     )
+    return data
+
+
+@register_compute_fun(
+    name="e_theta|r,p",
+    label="\\mathbf{e}_{\\theta} |_{\\rho, \\phi}",
+    units="m",
+    units_long="meters",
+    description=(
+        "Covariant poloidal basis vector in (ρ,θ,ϕ) coordinates. "
+        "ϕ increases counterclockwise when viewed from above "
+        "(cylindrical R,ϕ plane with Z out of page)."
+    ),
+    dim=3,
+    params=[],
+    transforms={},
+    profiles=[],
+    coordinates="rtz",
+    data=["e_theta", "e_phi", "phi_t"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+        "desc.geometry.core.Surface",
+    ],
+)
+def _e_sub_theta_rp(params, transforms, profiles, data, **kwargs):
+    data["e_theta|r,p"] = data["e_theta"] - (data["e_phi"].T * data["phi_t"]).T
     return data

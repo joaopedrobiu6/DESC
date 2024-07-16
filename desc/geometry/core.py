@@ -17,27 +17,62 @@ from desc.compute.utils import (
 )
 from desc.grid import LinearGrid, QuadratureGrid, _Grid
 from desc.io import IOAble
-from desc.optimizable import Optimizable
+from desc.optimizable import Optimizable, optimizable_parameter
 
 
 class Curve(IOAble, Optimizable, ABC):
     """Abstract base class for 1D curves in 3D space."""
 
-    _io_attrs_ = ["_name", "shift", "rotmat"]
+    _io_attrs_ = ["_name", "_shift", "_rotmat"]
 
     def __init__(self, name=""):
-        self.shift = jnp.array([0, 0, 0]).astype(float)
-        self.rotmat = jnp.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).astype(float)
-        self.name = name
+        self._shift = jnp.array([0, 0, 0], dtype=float)
+        self._rotmat = jnp.eye(3, dtype=float).flatten()
+        self._name = name
+
+    def _set_up(self):
+        """Set things after loading."""
+        if hasattr(self, "_NFP"):
+            self._NFP = int(self._NFP)
+        if not hasattr(self, "_shift"):
+            self.shift
+        if not hasattr(self, "_rotmat"):
+            self.rotmat
+
+    @optimizable_parameter
+    @property
+    def shift(self):
+        """Displacement of curve in X, Y, Z."""
+        return self.__dict__.setdefault("_shift", jnp.array([0, 0, 0], dtype=float))
+
+    @shift.setter
+    def shift(self, new):
+        if len(new) == 3:
+            self._shift = jnp.asarray(new)
+        else:
+            raise ValueError("shift should be a 3 element vector, got {}".format(new))
+
+    @optimizable_parameter
+    @property
+    def rotmat(self):
+        """Rotation matrix of curve in X, Y, Z."""
+        return self.__dict__.setdefault("_rotmat", jnp.eye(3, dtype=float).flatten())
+
+    @rotmat.setter
+    def rotmat(self, new):
+        if len(new) == 9:
+            self._rotmat = jnp.asarray(new)
+        else:
+            self._rotmat = jnp.asarray(new.flatten())
 
     @property
     def name(self):
         """Name of the curve."""
-        return self._name
+        return self.__dict__.setdefault("_name", "")
 
     @name.setter
     def name(self, new):
-        self._name = new
+        self._name = str(new)
 
     def compute(
         self,
@@ -63,7 +98,10 @@ class Curve(IOAble, Optimizable, ABC):
         transforms : dict of Transform
             Transforms for R, Z, lambda, etc. Default is to build from grid
         data : dict of ndarray
-            Data computed so far, generally output from other compute functions
+            Data computed so far, generally output from other compute functions.
+            Any vector v = v¹ R̂ + v² ϕ̂ + v³ Ẑ should be given in components
+            v = [v¹, v², v³] where R̂, ϕ̂, Ẑ are the normalized basis vectors
+            of the cylindrical coordinates R, ϕ, Z.
         override_grid : bool
             If True, override the user supplied grid if necessary and use a full
             resolution grid to compute quantities and then downsample to user requested
@@ -93,10 +131,13 @@ class Curve(IOAble, Optimizable, ABC):
             )
 
         if params is None:
-            params = get_params(names, obj=self)
+            params = get_params(names, obj=self, basis=kwargs.get("basis", "rpz"))
         if transforms is None:
             transforms = get_transforms(
-                names, obj=self, grid=grid, jitable=True, **kwargs
+                names,
+                obj=self,
+                grid=grid,
+                jitable=True,
             )
         if data is None:
             data = {}
@@ -121,7 +162,11 @@ class Curve(IOAble, Optimizable, ABC):
                 dep0d,
                 params=params,
                 transforms=get_transforms(
-                    dep0d, obj=self, grid=grid0d, jitable=True, **kwargs
+                    dep0d,
+                    obj=self,
+                    grid=grid0d,
+                    jitable=True,
+                    **kwargs,
                 ),
                 profiles={},
                 data=None,
@@ -143,19 +188,19 @@ class Curve(IOAble, Optimizable, ABC):
         return data
 
     def translate(self, displacement=[0, 0, 0]):
-        """Translate the curve by a rigid displacement in x, y, z."""
-        self.shift += jnp.asarray(displacement)
+        """Translate the curve by a rigid displacement in X,Y,Z coordinates."""
+        self.shift = self.shift + jnp.asarray(displacement)
 
     def rotate(self, axis=[0, 0, 1], angle=0):
-        """Rotate the curve by a fixed angle about axis in xyz coordinates."""
-        R = rotation_matrix(axis, angle)
-        self.rotmat = R @ self.rotmat
+        """Rotate the curve by a fixed angle about axis in X,Y,Z coordinates."""
+        R = rotation_matrix(axis=axis, angle=angle)
+        self.rotmat = (R @ self.rotmat.reshape(3, 3)).flatten()
         self.shift = self.shift @ R.T
 
-    def flip(self, normal):
-        """Flip the curve about the plane with specified normal."""
+    def flip(self, normal=[0, 0, 1]):
+        """Flip the curve about the plane with specified normal in X,Y,Z coordinates."""
         F = reflection_matrix(normal)
-        self.rotmat = F @ self.rotmat
+        self.rotmat = (F @ self.rotmat.reshape(3, 3)).flatten()
         self.shift = self.shift @ F.T
 
     def __repr__(self):
@@ -240,8 +285,36 @@ class Curve(IOAble, Optimizable, ABC):
             coords, knots=knots, method=method, name=name, basis="xyz"
         )
 
-    # TODO: to_rz method for converting to FourierRZCurve representation
-    # (might be impossible to parameterize some curves with toroidal angle phi)
+    def to_FourierRZ(self, N=None, grid=None, NFP=None, name=""):
+        """Convert Curve to FourierRZCurve representation.
+
+        Note that some types of curves may not be representable in this basis.
+
+        Parameters
+        ----------
+        N : int
+            Fourier resolution of the new R,Z representation.
+        grid : Grid, int or None
+            Grid used to evaluate curve coordinates on to fit with FourierRZCurve.
+            If an integer, uses that many equally spaced points.
+        NFP : int
+            Number of field periods, the curve will have a discrete toroidal symmetry
+            according to NFP.
+        name : str
+            name for this curve
+
+        Returns
+        -------
+        curve : FourierRZCurve
+            New representation of the curve parameterized by Fourier series for R,Z.
+
+        """
+        from .curve import FourierRZCurve
+
+        coords = self.compute("x", grid=grid, basis="xyz")["x"]
+        return FourierRZCurve.from_values(
+            coords, N=N, NFP=NFP if NFP is not None else 1, basis="xyz", name=name
+        )
 
 
 class Surface(IOAble, Optimizable, ABC):
@@ -249,14 +322,22 @@ class Surface(IOAble, Optimizable, ABC):
 
     _io_attrs_ = ["_name", "_sym", "_L", "_M", "_N"]
 
+    def _set_up(self):
+        """Set things after loading."""
+        if hasattr(self, "_NFP"):
+            self._NFP = int(self._NFP)
+        self._L = int(self._L)
+        self._M = int(self._M)
+        self._N = int(self._N)
+
     @property
     def name(self):
         """str: Name of the surface."""
-        return self._name
+        return self.__dict__.setdefault("_name", "")
 
     @name.setter
     def name(self, new):
-        self._name = new
+        self._name = str(new)
 
     @property
     def L(self):
@@ -370,10 +451,17 @@ class Surface(IOAble, Optimizable, ABC):
                 "must pass in a Grid object or an integer for argument grid!"
                 f" instead got type {type(grid)}"
             )
+
         if params is None:
-            params = get_params(names, obj=self)
+            params = get_params(names, obj=self, basis=kwargs.get("basis", "rpz"))
         if transforms is None:
-            transforms = get_transforms(names, obj=self, grid=grid, **kwargs)
+            transforms = get_transforms(
+                names,
+                obj=self,
+                grid=grid,
+                jitable=kwargs.pop("jitable", False),
+                **kwargs,
+            )
         if data is None:
             data = {}
         profiles = {}
@@ -419,7 +507,13 @@ class Surface(IOAble, Optimizable, ABC):
                 self,
                 dep0d,
                 params=params,
-                transforms=get_transforms(dep0d, obj=self, grid=grid0d, **kwargs),
+                transforms=get_transforms(
+                    dep0d,
+                    obj=self,
+                    grid=grid0d,
+                    jitable=kwargs.pop("jitable", False),
+                    **kwargs,
+                ),
                 profiles={},
                 data=None,
                 **kwargs,

@@ -12,7 +12,7 @@ expensive computations.
 from desc.backend import jnp
 
 from .data_index import register_compute_fun
-from .utils import cross, dot, line_integrals, surface_integrals
+from .utils import cross, dot, line_integrals, safenorm, surface_integrals
 
 
 @register_compute_fun(
@@ -145,6 +145,81 @@ def _V_rrr_of_r(params, transforms, profiles, data, **kwargs):
 
 
 @register_compute_fun(
+    name="A(z)",
+    label="A(\\zeta)",
+    units="m^{2}",
+    units_long="square meters",
+    description="Cross-sectional area as function of zeta",
+    dim=1,
+    params=[],
+    transforms={"grid": []},
+    profiles=[],
+    coordinates="z",
+    data=["|e_rho x e_theta|"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.ZernikeRZToroidalSection",
+    ],
+)
+def _A_of_z(params, transforms, profiles, data, **kwargs):
+    data["A(z)"] = surface_integrals(
+        transforms["grid"],
+        data["|e_rho x e_theta|"],
+        surface_label="zeta",
+        expand_out=True,
+    )
+    return data
+
+
+@register_compute_fun(
+    name="A(z)",
+    label="A(\\zeta)",
+    units="m^{2}",
+    units_long="square meters",
+    description="Area of enclosed cross-section (enclosed constant phi surface), "
+    "scaled by max(ρ)⁻², as function of zeta",
+    dim=1,
+    params=[],
+    transforms={"grid": []},
+    profiles=[],
+    coordinates="z",
+    data=["Z", "n_rho", "e_theta|r,p", "rho"],
+    parameterization=["desc.geometry.surface.FourierRZToroidalSurface"],
+    # FIXME: Add source grid requirement once omega is nonzero.
+)
+def _A_of_z_FourierRZToroidalSurface(params, transforms, profiles, data, **kwargs):
+    # Denote any vector v = [vᴿ, v^ϕ, vᶻ] with a tuple of its contravariant components.
+    # We use a 2D divergence theorem over constant ϕ toroidal surface (i.e. R, Z plane).
+    # In this geometry, the divergence operator on a polar basis vector is
+    # div = ([∂_R, ∂_ϕ, ∂_Z] ⊗ [1, 0, 1]) dot .
+    # ∫ dA div v = ∫ dℓ n dot v
+    # where n is the unit normal such that n dot e_θ|ρ,ϕ = 0 and n dot e_ϕ|R,Z = 0,
+    # and the labels following | denote those coordinates are fixed.
+    # Now choose v = [0, 0, Z], and n in the direction (e_θ|ρ,ζ × e_ζ|ρ,θ) ⊗ [1, 0, 1].
+    n = data["n_rho"]
+    n = n.at[:, 1].set(0)
+    n = n / jnp.linalg.norm(n, axis=-1)[:, jnp.newaxis]
+    max_rho = jnp.max(data["rho"])
+    data["A(z)"] = jnp.abs(
+        line_integrals(
+            transforms["grid"],
+            data["Z"] * n[:, 2] * safenorm(data["e_theta|r,p"], axis=-1),
+            # FIXME: Works currently for omega = zero, but for nonzero omega
+            #  we need to integrate over theta at constant phi.
+            #  Should be simple once we have coordinate mapping and source grid
+            #  logic from GitHub pull request #1024.
+            line_label="theta",
+            fix_surface=("rho", max_rho),
+            expand_out=True,
+        )
+        # To approximate area at ρ ~ 1, we scale by ρ⁻², assuming the integrand
+        # varies little from ρ = max_rho to ρ = 1 and a roughly circular cross-section.
+        / max_rho**2
+    )
+    return data
+
+
+@register_compute_fun(
     name="A",
     label="A",
     units="m^{2}",
@@ -155,20 +230,15 @@ def _V_rrr_of_r(params, transforms, profiles, data, **kwargs):
     transforms={"grid": []},
     profiles=[],
     coordinates="",
-    data=["|e_rho x e_theta|"],
+    data=["A(z)"],
     parameterization=[
         "desc.equilibrium.equilibrium.Equilibrium",
-        "desc.geometry.surface.ZernikeRZToroidalSection",
+        "desc.geometry.core.Surface",
     ],
 )
 def _A(params, transforms, profiles, data, **kwargs):
     data["A"] = jnp.mean(
-        surface_integrals(
-            transforms["grid"],
-            jnp.abs(data["|e_rho x e_theta|"]),
-            surface_label="zeta",
-            expand_out=False,
-        )
+        transforms["grid"].compress(data["A(z)"], surface_label="zeta")
     )
     return data
 
@@ -288,6 +358,10 @@ def _S_rr_of_r(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="",
     data=["V", "A"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
 )
 def _R0(params, transforms, profiles, data, **kwargs):
     data["R0"] = data["V"] / (2 * jnp.pi * data["A"])
@@ -306,6 +380,10 @@ def _R0(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="",
     data=["A"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
 )
 def _a(params, transforms, profiles, data, **kwargs):
     data["a"] = jnp.sqrt(data["A"] / jnp.pi)
@@ -324,9 +402,52 @@ def _a(params, transforms, profiles, data, **kwargs):
     profiles=[],
     coordinates="",
     data=["R0", "a"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.surface.FourierRZToroidalSurface",
+    ],
 )
 def _R0_over_a(params, transforms, profiles, data, **kwargs):
     data["R0/a"] = data["R0"] / data["a"]
+    return data
+
+
+@register_compute_fun(
+    name="perimeter(z)",
+    label="P(\\zeta)",
+    units="m",
+    units_long="meters",
+    description="Perimeter of enclosed cross-section (enclosed constant phi surface), "
+    "scaled by max(ρ)⁻¹, as function of zeta",
+    dim=1,
+    params=[],
+    transforms={"grid": []},
+    profiles=[],
+    coordinates="z",
+    data=["rho", "e_theta|r,p"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.core.Surface",
+    ],
+)
+def _perimeter_of_z(params, transforms, profiles, data, **kwargs):
+    max_rho = jnp.max(data["rho"])
+    data["perimeter(z)"] = (
+        line_integrals(
+            transforms["grid"],
+            safenorm(data["e_theta|r,p"], axis=-1),
+            # FIXME: Works currently for omega = zero, but for nonzero omega
+            #  we need to integrate over theta at constant phi.
+            #  Should be simple once we have coordinate mapping and source grid
+            #  logic from GitHub pull request #1024.
+            line_label="theta",
+            fix_surface=("rho", max_rho),
+            expand_out=True,
+        )
+        # To approximate perimeter at ρ ~ 1, we scale by ρ⁻¹, assuming the integrand
+        # varies little from ρ = max_rho to ρ = 1.
+        / max_rho
+    )
     return data
 
 
@@ -341,27 +462,15 @@ def _R0_over_a(params, transforms, profiles, data, **kwargs):
     transforms={"grid": []},
     profiles=[],
     coordinates="z",
-    data=["rho", "sqrt(g)", "g_tt", "R"],
+    data=["A(z)", "perimeter(z)"],
+    parameterization=[
+        "desc.equilibrium.equilibrium.Equilibrium",
+        "desc.geometry.core.Surface",
+    ],
 )
 def _a_major_over_a_minor(params, transforms, profiles, data, **kwargs):
-    max_rho = jnp.max(data["rho"])
-    P = (  # perimeter at rho=1
-        line_integrals(
-            transforms["grid"],
-            jnp.sqrt(data["g_tt"]),
-            line_label="theta",
-            fix_surface=("rho", max_rho),
-            expand_out=False,
-        )
-        / max_rho
-    )
-    # surface area
-    A = surface_integrals(
-        transforms["grid"],
-        jnp.abs(data["sqrt(g)"] / data["R"]),
-        surface_label="zeta",
-        expand_out=False,
-    )
+    A = transforms["grid"].compress(data["A(z)"], surface_label="zeta")
+    P = transforms["grid"].compress(data["perimeter(z)"], surface_label="zeta")
     # derived from Ramanujan approximation for the perimeter of an ellipse
     a = (  # semi-major radius
         jnp.sqrt(3)
